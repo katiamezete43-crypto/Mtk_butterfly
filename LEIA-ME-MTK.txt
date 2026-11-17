@@ -1,0 +1,35 @@
+MTK BUTTERFLY - VITRINE VIRTUAL
+
+O QUE FOI ADAPTADO
+- Identidade e textos da loja para MTK Butterfly.
+- Categorias: Buques de borboletas, Buques de rosas, Cestas,
+  Cestas de chocolate, Aniversario e Outros.
+- Cadastro de cores disponiveis e prazo de producao em dias.
+- Cliente escolhe cor, quantidade e observacoes em cada produto.
+- Carrinho permite adicionar mais de um produto.
+- Na finalizacao, o cliente informa a data desejada e envia o carrinho
+  completo diretamente para o WhatsApp.
+- Nao existe cadastro de cliente nem painel de pedidos. A conversa e
+  a confirmacao acontecem diretamente pelo WhatsApp.
+- Login, Supabase, upload de fotos e cadastro/edicao/exclusao de produtos
+  foram mantidos da estrutura anterior.
+
+ANTES DE PUBLICAR
+1. Abra o projeto no VS Code.
+2. No Supabase, abra SQL Editor e execute o arquivo
+   AJUSTE_SUPABASE_MTK.sql.
+3. Confira se o arquivo .env local tem VITE_SUPABASE_URL e
+   VITE_SUPABASE_PUBLISHABLE_KEY. O .env nao esta incluido neste ZIP
+   por seguranca; mantenha o seu arquivo local.
+4. No terminal, execute npm install e depois npm run dev para testar.
+5. Teste o cadastro de um produto, escolha de cor, quantidade, carrinho
+   e envio da mensagem para o WhatsApp antes de publicar.
+
+WHATSAPP
+O codigo usa o numero que ja estava configurado no projeto enviado:
+5535988840702. Se precisar trocar, altere a constante whatsapp no inicio
+ do arquivo src/main.js. Use apenas numeros, com codigo do pais e DDD.
+
+OBSERVACAO
+O projeto usa as tabelas existentes `produto` e o bucket `imagens-produtos`.
+As tabelas antigas de estoque/tamanhos nao sao mais usadas pela vitrine MTK.

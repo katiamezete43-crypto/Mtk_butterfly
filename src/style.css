@@ -1,0 +1,419 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #571d35;
+  background: #fff9fc;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+/* CABEÇALHO */
+
+header {
+  background: white;
+  padding: 15px 7%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 15px #0000000c;
+}
+
+.logo-imagem {
+  width: 100px;
+  height: 75px;
+  object-fit: contain;
+}
+
+nav {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+nav a {
+  text-decoration: none;
+  color: #571d35;
+  font-size: 14px;
+}
+
+nav a:hover {
+  color: #d63384;
+}
+
+.botao-contato,
+.botao-principal {
+  background: #d63384;
+  color: white;
+  padding: 12px 25px;
+  border-radius: 30px;
+  text-decoration: none;
+}
+
+/* BANNER */
+
+.banner {
+  min-height: 480px;
+  background: linear-gradient(120deg, #f9c9dc, #fce8f0, #f5b2ce);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 60px 10%;
+  gap: 30px;
+}
+
+.banner-conteudo {
+  max-width: 500px;
+}
+
+.subtitulo {
+  color: #a3295e;
+  letter-spacing: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.banner h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 65px;
+  color: #651b3b;
+  margin-bottom: 20px;
+}
+
+.banner h1 span {
+  color: #d63384;
+}
+
+.banner-conteudo > p:not(.subtitulo) {
+  margin-bottom: 30px;
+  line-height: 1.7;
+}
+
+.banner-decoracao {
+  width: 350px;
+  height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+.banner-decoracao img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* CATEGORIAS E PRODUTOS */
+
+.categorias,
+.produtos {
+  text-align: center;
+  padding: 70px 7%;
+}
+
+h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 35px;
+  color: #651b3b;
+  margin-bottom: 30px;
+}
+
+.categorias-lista {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.categorias-lista button {
+  border: 1px solid #e7a5bf;
+  background: white;
+  color: #a3295e;
+  padding: 12px 28px;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.categorias-lista button:hover {
+  background: #d63384;
+  color: white;
+}
+
+.produtos {
+  background: #fff0f6;
+}
+
+.grade-produtos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 25px;
+  margin-top: 40px;
+}
+
+/* CARTÃO DO PRODUTO */
+
+.produto-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  text-align: left;
+  box-shadow: 0 5px 20px #0000000b;
+  transition: 0.3s;
+}
+
+.produto-card:hover {
+  transform: translateY(-5px);
+}
+
+/* FOTOS DOS PRODUTOS */
+
+.produto-card img {
+  display: block;
+  width: 100%;
+  height: 280px;
+  object-fit: contain;
+  object-position: center;
+  background: #ffffff;
+  padding: 8px;
+}
+
+/* INFORMAÇÕES DO PRODUTO */
+
+.produto-info {
+  padding: 20px;
+}
+
+.categoria-produto {
+  color: #d63384;
+  font-size: 12px;
+}
+
+.produto-info h3 {
+  margin: 10px 0;
+}
+
+.tamanho {
+  color: #888;
+  font-size: 13px;
+}
+
+.preco {
+  font-size: 22px;
+  font-weight: bold;
+  color: #781c42;
+  margin: 15px 0;
+}
+
+.botao-produto {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  background: #d63384;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+/* CONTATO */
+
+.contato {
+  text-align: center;
+  padding: 70px 20px;
+}
+
+.contato a {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 15px 30px;
+  background: #781c42;
+  color: white;
+  text-decoration: none;
+  border-radius: 30px;
+}
+
+/* RODAPÉ */
+
+footer {
+  background: #571d35;
+  color: white;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.logo-rodape {
+  width: 120px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 15px;
+}
+
+.creditos {
+  font-size: 12px;
+  margin-top: 30px;
+  opacity: 0.8;
+}
+
+/* BOTÃO WHATSAPP */
+
+.whatsapp-flutuante {
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+  background: #25d366;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 30px;
+  text-decoration: none;
+  box-shadow: 0 4px 15px #00000030;
+  z-index: 100;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 750px) {
+
+  header {
+    flex-direction: column;
+    gap: 18px;
+    padding: 15px 5%;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 40px;
+    padding: 45px 20px;
+  }
+
+  .banner h1 {
+    font-size: 42px;
+  }
+
+  .banner-decoracao {
+    width: 260px;
+    height: 260px;
+  }
+
+  .categorias,
+  .produtos {
+    padding: 50px 5%;
+  }
+
+  h2 {
+    font-size: 29px;
+  }
+
+  .grade-produtos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+  }
+
+  .produto-card img {
+    height: 220px;
+  }
+
+  .produto-info {
+    padding: 12px;
+  }
+
+  .produto-info h3 {
+    font-size: 15px;
+  }
+
+  .preco {
+    font-size: 19px;
+  }
+
+  .whatsapp-flutuante {
+    right: 15px;
+    bottom: 15px;
+    padding: 12px 16px;
+  }
+}
+
+/* CELULARES PEQUENOS */
+
+@media (max-width: 380px) {
+
+  .grade-produtos {
+    grid-template-columns: 1fr;
+  }
+
+  .produto-card img {
+    height: 260px;
+  }
+
+  .banner h1 {
+    font-size: 35px;
+  }
+
+}
+/* Identidade visual MTK Butterfly */
+.marca-mtk{display:flex;align-items:center;gap:9px;text-decoration:none;color:#781c42;font-family:'Playfair Display',serif;font-size:25px;font-weight:700}
+.marca-mtk:first-letter{font-size:34px}
+.banner-decoracao{background:radial-gradient(circle,#fff 0 40%,#f9c9dc 41% 70%,transparent 71%);border-radius:50%}
+.selo-mtk{width:245px;height:245px;border-radius:50%;background:#fff9fc;border:2px solid #e7a5bf;box-shadow:0 12px 35px #781c4220;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#781c42;gap:8px;text-align:center}
+.selo-mtk strong{font-family:'Playfair Display',serif;font-size:34px;line-height:1.05}
+.selo-mtk span{font-size:12px;letter-spacing:1px}
+.marca-rodape{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;margin-bottom:12px}
+@media(max-width:750px){.marca-mtk{font-size:23px}.selo-mtk{width:210px;height:210px}.selo-mtk strong{font-size:29px}}
+/* LOGO MTK BUTTERFLY */
+
+.marca-mtk {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #781c42;
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.marca-mtk img {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.banner-decoracao img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+@media (max-width: 600px) {
+  .banner-decoracao {
+    width: 230px;
+    height: 230px;
+  }
+
+  .marca-mtk img {
+    width: 50px;
+    height: 50px;
+  }
+}
