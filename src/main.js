@@ -1,4 +1,4 @@
-```javascript
+
 import './style.css'
 import { supabase } from './lib/supabase.js'
 
@@ -1011,4 +1011,4 @@ document.querySelector('#voltar-topo').addEventListener('click', () => {
 // ==========================================
 
 carregarProdutos()
-```
+
