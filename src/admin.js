@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase.js'
 const app = document.querySelector('#admin-app')
 
 let produtoEditando = null
+let quantidadeOpcoes = 0
 
 // ==========================================
 // ESTILIZAÇÃO
@@ -89,29 +90,60 @@ textarea {
     border-radius: 9px;
     cursor: pointer;
     font-size: 15px;
+    margin-top: 10px;
 }
 
 .botao:hover { background: #b8256c; }
 .botao:disabled { opacity: .6; cursor: wait; }
-
 .botao-secundario { background: #777; }
 .botao-excluir { background: #b52d55; }
 .botao-sair { background: #777; }
-.botao-editar { background: #d63384; }
 
-.linha-tamanho {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: 10px;
-    margin: 10px 0;
+.opcao-card {
+    background: #fff6fa;
+    border: 1px solid #efb4cf;
+    padding: 18px;
+    border-radius: 12px;
+    margin-top: 15px;
 }
 
-.linha-tamanho input { min-width: 0; }
-
-#mensagem, #mensagem-produto {
-    margin-top: 15px;
+.opcao-card h3 {
     color: #d63384;
-    font-weight: bold;
+    margin-top: 0;
+}
+
+.alternativa-linha {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.alternativa-linha input {
+    flex: 1;
+}
+
+.alternativa-linha button {
+    border: none;
+    background: #b52d55;
+    color: white;
+    border-radius: 8px;
+    padding: 8px 13px;
+    cursor: pointer;
+}
+
+.checkbox-linha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.checkbox-linha input {
+    width: auto;
+}
+
+.checkbox-linha label {
+    margin: 0;
 }
 
 .produto-admin {
@@ -150,8 +182,10 @@ textarea {
     text-decoration: underline;
 }
 
-.link-recuperacao:hover {
-    color: #b8256c;
+#mensagem, #mensagem-produto {
+    margin-top: 15px;
+    color: #d63384;
+    font-weight: bold;
 }
 
 @media (max-width: 600px) {
@@ -173,10 +207,11 @@ document.head.appendChild(estilo)
 
 
 // ==========================================
-// VERIFICA SE É ADMINISTRADOR
+// VERIFICA ADMINISTRADOR
 // ==========================================
 
 async function verificarAdministrador(usuario) {
+
     const { data, error } = await supabase
         .from('administradores')
         .select('user_id')
@@ -198,38 +233,27 @@ async function verificarAdministrador(usuario) {
 
 
 // ==========================================
-// TELA DE LOGIN
+// LOGIN
 // ==========================================
 
 function mostrarLogin(texto = '') {
+
     app.innerHTML = `
         <div class="painel">
             <div class="container">
-
                 <div class="cartao"
                     style="max-width:420px;margin:100px auto;text-align:center">
 
                     <h1>MTK BUTTERFLY</h1>
-
                     <p>Área exclusiva do administrador</p>
 
                     <form id="form-login">
 
                         <label>E-mail</label>
-
-                        <input
-                            type="email"
-                            id="email"
-                            required
-                        >
+                        <input type="email" id="email" required>
 
                         <label>Senha</label>
-
-                        <input
-                            type="password"
-                            id="senha"
-                            required
-                        >
+                        <input type="password" id="senha" required>
 
                         <br><br>
 
@@ -242,8 +266,7 @@ function mostrarLogin(texto = '') {
                     <button
                         type="button"
                         class="link-recuperacao"
-                        id="esqueci-senha"
-                    >
+                        id="esqueci-senha">
                         Esqueci minha senha
                     </button>
 
@@ -265,15 +288,12 @@ function mostrarLogin(texto = '') {
 
 
 // ==========================================
-// SOLICITAR RECUPERAÇÃO DE SENHA
+// RECUPERAR SENHA
 // ==========================================
 
 async function solicitarRecuperacao() {
-    const email = document
-        .querySelector('#email')
-        .value
-        .trim()
 
+    const email = document.querySelector('#email').value.trim()
     const mensagem = document.querySelector('#mensagem')
     const botao = document.querySelector('#esqueci-senha')
 
@@ -283,10 +303,10 @@ async function solicitarRecuperacao() {
     }
 
     botao.disabled = true
-
     mensagem.textContent = 'Enviando e-mail de recuperação...'
 
     try {
+
         const { error } = await supabase.auth.resetPasswordForEmail(
             email,
             {
@@ -294,15 +314,12 @@ async function solicitarRecuperacao() {
             }
         )
 
-        if (error) {
-            throw error
-        }
+        if (error) throw error
 
         mensagem.textContent =
             'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha. Verifique sua caixa de entrada.'
 
     } catch (erro) {
-        console.error(erro)
 
         mensagem.textContent =
             'Não foi possível enviar o e-mail: ' + erro.message
@@ -314,10 +331,11 @@ async function solicitarRecuperacao() {
 
 
 // ==========================================
-// TELA PARA CADASTRAR NOVA SENHA
+// REDEFINIR SENHA
 // ==========================================
 
 function mostrarRedefinirSenha(texto = '') {
+
     app.innerHTML = `
         <div class="painel">
             <div class="container">
@@ -326,36 +344,22 @@ function mostrarRedefinirSenha(texto = '') {
                     style="max-width:420px;margin:100px auto;text-align:center">
 
                     <h1>MTK BUTTERFLY</h1>
-
                     <p>Cadastre sua nova senha</p>
 
                     <form id="form-nova-senha">
 
                         <label>Nova senha</label>
-
-                        <input
-                            type="password"
-                            id="nova-senha"
-                            minlength="6"
-                            required
-                        >
+                        <input type="password" id="nova-senha"
+                            minlength="6" required>
 
                         <label>Confirme a nova senha</label>
-
-                        <input
-                            type="password"
-                            id="confirmar-senha"
-                            minlength="6"
-                            required
-                        >
+                        <input type="password" id="confirmar-senha"
+                            minlength="6" required>
 
                         <br><br>
 
-                        <button
-                            class="botao"
-                            type="submit"
-                            id="botao-nova-senha"
-                        >
+                        <button class="botao" type="submit"
+                            id="botao-nova-senha">
                             Salvar nova senha
                         </button>
 
@@ -374,11 +378,8 @@ function mostrarRedefinirSenha(texto = '') {
 }
 
 
-// ==========================================
-// SALVAR NOVA SENHA
-// ==========================================
-
 async function salvarNovaSenha(evento) {
+
     evento.preventDefault()
 
     const senha = document.querySelector('#nova-senha').value
@@ -388,9 +389,7 @@ async function salvarNovaSenha(evento) {
     const botao = document.querySelector('#botao-nova-senha')
 
     if (senha.length < 6) {
-        mensagem.textContent =
-            'A senha precisa ter pelo menos 6 caracteres.'
-
+        mensagem.textContent = 'A senha precisa ter pelo menos 6 caracteres.'
         return
     }
 
@@ -400,17 +399,15 @@ async function salvarNovaSenha(evento) {
     }
 
     botao.disabled = true
-
     mensagem.textContent = 'Atualizando sua senha...'
 
     try {
+
         const { error } = await supabase.auth.updateUser({
             password: senha
         })
 
-        if (error) {
-            throw error
-        }
+        if (error) throw error
 
         await supabase.auth.signOut()
 
@@ -425,7 +422,6 @@ async function salvarNovaSenha(evento) {
         )
 
     } catch (erro) {
-        console.error(erro)
 
         mensagem.textContent =
             'Não foi possível alterar a senha: ' + erro.message
@@ -436,10 +432,11 @@ async function salvarNovaSenha(evento) {
 
 
 // ==========================================
-// LOGIN
+// ENTRAR
 // ==========================================
 
 async function entrar(evento) {
+
     evento.preventDefault()
 
     const email = document.querySelector('#email').value.trim()
@@ -468,7 +465,9 @@ async function entrar(evento) {
 // ==========================================
 
 function mostrarPainel() {
+
     produtoEditando = null
+    quantidadeOpcoes = 0
 
     app.innerHTML = `
         <div class="painel">
@@ -489,9 +488,7 @@ function mostrarPainel() {
 
                 <section class="cartao">
 
-                    <h2 id="titulo-formulario">
-                        Cadastrar produto
-                    </h2>
+                    <h2 id="titulo-formulario">Cadastrar produto</h2>
 
                     <form id="form-produto">
 
@@ -502,13 +499,8 @@ function mostrarPainel() {
                         <textarea id="descricao"></textarea>
 
                         <label>Preço (R$)</label>
-                        <input
-                            type="number"
-                            id="preco"
-                            min="0.01"
-                            step="0.01"
-                            required
-                        >
+                        <input type="number" id="preco"
+                            min="0.01" step="0.01" required>
 
                         <label>Categoria</label>
 
@@ -523,51 +515,44 @@ function mostrarPainel() {
                         </select>
 
                         <label>Foto do produto</label>
-
-                        <input
-                            type="file"
-                            id="imagem"
-                            accept="image/*"
-                        >
+                        <input type="file" id="imagem" accept="image/*">
 
                         <p id="aviso-imagem">
                             Selecione uma foto para o produto.
                         </p>
 
-                        <label for="cores">Cores disponíveis</label>
-                        <input
-                            type="text"
-                            id="cores"
-                            placeholder="Ex.: Azul, rosa, branco, vermelho"
-                        >
-                        <small>Separe as cores por vírgula. Se deixar vazio, o cliente poderá combinar a cor pelo WhatsApp.</small>
+                        <hr>
 
-                        <label for="prazo-producao">Prazo de produção (dias)</label>
-                        <input
-                            type="number"
-                            id="prazo-producao"
-                            min="0"
-                            step="1"
-                            value="3"
-                            required
-                        >
+                        <h2>Personalização do produto</h2>
+
+                        <p>
+                            Adicione opções para o cliente escolher,
+                            como cor, tamanho, chocolate ou material.
+                        </p>
+
+                        <div id="lista-opcoes"></div>
+
+                        <button type="button" class="botao"
+                            id="adicionar-opcao">
+                            + Adicionar grupo de opções
+                        </button>
+
+                        <br>
+
+                        <label>Prazo de produção (dias)</label>
+                        <input type="number" id="prazo-producao"
+                            min="0" step="1" value="3" required>
 
                         <br><br>
 
-                        <button
-                            type="submit"
-                            class="botao"
-                            id="salvar-produto"
-                        >
+                        <button type="submit" class="botao"
+                            id="salvar-produto">
                             Cadastrar produto
                         </button>
 
-                        <button
-                            type="button"
+                        <button type="button"
                             class="botao botao-secundario"
-                            id="cancelar-edicao"
-                            hidden
-                        >
+                            id="cancelar-edicao" hidden>
                             Cancelar edição
                         </button>
 
@@ -591,27 +576,178 @@ function mostrarPainel() {
         </div>
     `
 
-    document
-        .querySelector('#sair')
+    document.querySelector('#sair')
         .addEventListener('click', sair)
 
-    document
-        .querySelector('#form-produto')
+    document.querySelector('#form-produto')
         .addEventListener('submit', salvarProduto)
 
-    document
-        .querySelector('#cancelar-edicao')
+    document.querySelector('#cancelar-edicao')
         .addEventListener('click', cancelarEdicao)
+
+    document.querySelector('#adicionar-opcao')
+        .addEventListener('click', () => adicionarGrupoOpcao())
 
     carregarProdutosAdmin()
 }
 
 
 // ==========================================
-// UPLOAD DA IMAGEM
+// CRIAR GRUPO DE OPÇÕES
+// ==========================================
+
+function adicionarGrupoOpcao(dados = null) {
+
+    quantidadeOpcoes++
+
+    const id = quantidadeOpcoes
+
+    const container = document.querySelector('#lista-opcoes')
+
+    const card = document.createElement('div')
+
+    card.className = 'opcao-card'
+    card.dataset.grupo = id
+
+    card.innerHTML = `
+
+        <h3>Grupo de opções</h3>
+
+        <label>Nome da opção</label>
+
+        <input
+            type="text"
+            class="nome-opcao"
+            placeholder="Ex.: Cor, Tamanho, Tipo de chocolate"
+            value="${escaparHTML(dados?.nome || '')}"
+            required
+        >
+
+        <label>Alternativas disponíveis</label>
+
+        <div class="alternativas"></div>
+
+        <button type="button" class="botao adicionar-alternativa">
+            + Adicionar alternativa
+        </button>
+
+        <div class="checkbox-linha">
+            <input type="checkbox" class="opcao-obrigatoria"
+                ${dados?.obrigatoria ? 'checked' : ''}>
+            <label>Cliente precisa escolher esta opção</label>
+        </div>
+
+        <button type="button" class="botao botao-excluir remover-grupo">
+            Remover grupo
+        </button>
+    `
+
+    container.appendChild(card)
+
+    const alternativas = card.querySelector('.alternativas')
+
+    if (dados?.alternativas?.length) {
+
+        dados.alternativas.forEach(alternativa => {
+            adicionarAlternativa(alternativas, alternativa)
+        })
+
+    } else {
+
+        adicionarAlternativa(alternativas)
+    }
+
+    card.querySelector('.adicionar-alternativa')
+        .addEventListener('click', () => {
+            adicionarAlternativa(alternativas)
+        })
+
+    card.querySelector('.remover-grupo')
+        .addEventListener('click', () => {
+            card.remove()
+        })
+}
+
+
+// ==========================================
+// ADICIONAR ALTERNATIVA
+// ==========================================
+
+function adicionarAlternativa(container, valor = '') {
+
+    const linha = document.createElement('div')
+
+    linha.className = 'alternativa-linha'
+
+    linha.innerHTML = `
+        <input
+            type="text"
+            class="valor-alternativa"
+            placeholder="Ex.: Rosa"
+            value="${escaparHTML(valor)}"
+            required
+        >
+
+        <button type="button">X</button>
+    `
+
+    container.appendChild(linha)
+
+    linha.querySelector('button').addEventListener('click', () => {
+        linha.remove()
+    })
+}
+
+
+// ==========================================
+// LER OPÇÕES DO FORMULÁRIO
+// ==========================================
+
+function obterOpcoesFormulario() {
+
+    const grupos = document.querySelectorAll('.opcao-card')
+
+    const opcoes = []
+
+    grupos.forEach(grupo => {
+
+        const nome = grupo.querySelector('.nome-opcao').value.trim()
+
+        const alternativas = [
+            ...grupo.querySelectorAll('.valor-alternativa')
+        ]
+            .map(input => input.value.trim())
+            .filter(Boolean)
+
+        const obrigatoria =
+            grupo.querySelector('.opcao-obrigatoria').checked
+
+        if (!nome) {
+            throw new Error('Informe o nome de todos os grupos de opções.')
+        }
+
+        if (!alternativas.length) {
+            throw new Error(`Adicione alternativas para "${nome}".`)
+        }
+
+        opcoes.push({
+            nome,
+            alternativas,
+            obrigatoria,
+            multipla: true
+        })
+    })
+
+    return opcoes
+}
+
+
+// ==========================================
+// ENVIAR IMAGEM
 // ==========================================
 
 async function enviarImagem(arquivo) {
+
     const extensao = arquivo.name.split('.').pop()
 
     const nomeArquivo = `${crypto.randomUUID()}.${extensao}`
@@ -637,33 +773,33 @@ async function enviarImagem(arquivo) {
 // ==========================================
 
 async function salvarProduto(evento) {
+
     evento.preventDefault()
 
     const mensagem = document.querySelector('#mensagem-produto')
-
     const botao = document.querySelector('#salvar-produto')
 
     botao.disabled = true
-
     mensagem.textContent = 'Salvando...'
 
     try {
+
         const nome = document.querySelector('#nome').value.trim()
 
-        const descricao = document
-            .querySelector('#descricao')
-            .value.trim()
+        const descricao = document.querySelector('#descricao').value.trim()
 
-        const preco = Number(
-            document.querySelector('#preco').value
-        )
+        const preco = Number(document.querySelector('#preco').value)
 
         const categoria = document.querySelector('#categoria').value
-        const cores = document.querySelector('#cores').value.split(',').map(c => c.trim()).filter(Boolean)
-        const prazoProducao = Number(document.querySelector('#prazo-producao').value)
+
+        const opcoesPersonalizadas = obterOpcoesFormulario()
+
+        const prazoProducao = Number(
+            document.querySelector('#prazo-producao').value
+        )
 
         if (!Number.isInteger(prazoProducao) || prazoProducao < 0) {
-            throw new Error('Informe um prazo de produção válido em dias.')
+            throw new Error('Informe um prazo de produção válido.')
         }
 
         const arquivo = document.querySelector('#imagem').files[0]
@@ -674,44 +810,37 @@ async function salvarProduto(evento) {
             imagemUrl = await enviarImagem(arquivo)
         }
 
+        const dadosProduto = {
+            nome,
+            descricao,
+            preco,
+            categoria,
+            imagem_url: imagemUrl,
+            cores: [],
+            opcoes_personalizadas: opcoesPersonalizadas,
+            prazo_producao_dias: prazoProducao
+        }
+
         if (produtoEditando) {
+
             const { error } = await supabase
                 .from('produto')
-                .update({
-                    nome,
-                    descricao,
-                    preco,
-                    categoria,
-                    imagem_url: imagemUrl,
-                    cores,
-                    prazo_producao_dias: prazoProducao
-                })
+                .update(dadosProduto)
                 .eq('id', produtoEditando.id)
 
             if (error) throw error
 
-            mensagem.textContent =
-                'Produto atualizado com sucesso! ❤️'
+            mensagem.textContent = 'Produto atualizado com sucesso! ❤️'
 
         } else {
-            const { data, error } = await supabase
+
+            const { error } = await supabase
                 .from('produto')
-                .insert([{
-                    nome,
-                    descricao,
-                    preco,
-                    categoria,
-                    imagem_url: imagemUrl,
-                    cores,
-                    prazo_producao_dias: prazoProducao
-                }])
-                .select()
-                .single()
+                .insert([dadosProduto])
 
             if (error) throw error
 
-            mensagem.textContent =
-                'Produto cadastrado com sucesso! ❤️'
+            mensagem.textContent = 'Produto cadastrado com sucesso! ❤️'
         }
 
         limparFormulario()
@@ -719,12 +848,15 @@ async function salvarProduto(evento) {
         await carregarProdutosAdmin()
 
     } catch (erro) {
+
         console.error(erro)
 
         mensagem.textContent = 'Erro: ' + erro.message
-    }
 
-    botao.disabled = false
+    } finally {
+
+        botao.disabled = false
+    }
 }
 
 
@@ -733,6 +865,7 @@ async function salvarProduto(evento) {
 // ==========================================
 
 async function carregarProdutosAdmin() {
+
     const container = document.querySelector('#produtos-cadastrados')
 
     const { data, error } = await supabase
@@ -745,13 +878,14 @@ async function carregarProdutosAdmin() {
             categoria,
             imagem_url,
             cores,
+            opcoes_personalizadas,
             prazo_producao_dias
         `)
         .order('created_at', { ascending: false })
 
     if (error) {
-        container.textContent =
-            'Não foi possível carregar os produtos.'
+
+        container.textContent = 'Não foi possível carregar os produtos.'
 
         console.error(error)
 
@@ -759,56 +893,72 @@ async function carregarProdutosAdmin() {
     }
 
     if (!data || data.length === 0) {
+
         container.textContent = 'Nenhum produto cadastrado.'
+
         return
     }
 
-    container.innerHTML = data.map(produto => `
-        <article class="produto-admin">
+    container.innerHTML = data.map(produto => {
 
-            <img
-                src="${produto.imagem_url || 'https://placehold.co/100x120?text=Sem+foto'}"
-                alt="Foto do produto"
-            >
+        const opcoes = produto.opcoes_personalizadas || []
 
-            <div class="produto-admin-info">
+        const textoOpcoes = opcoes.length
+            ? opcoes.map(o => `${o.nome}: ${o.alternativas.join(', ')}`).join(' | ')
+            : 'Sem opções personalizadas'
 
-                <h3>${escaparHTML(produto.nome)}</h3>
+        return `
 
-                <p>${escaparHTML(produto.categoria || '')}</p>
+            <article class="produto-admin">
 
-                <strong>
-                    R$ ${Number(produto.preco).toFixed(2).replace('.', ',')}
-                </strong>
+                <img
+                    src="${produto.imagem_url || 'https://placehold.co/100x120?text=Sem+foto'}"
+                    alt="Foto do produto"
+                >
 
-                <p>Cores: ${escaparHTML((produto.cores || []).join(', ') || 'A combinar')}</p>
-                <p>Prazo de produção: ${Number(produto.prazo_producao_dias || 0)} dia(s)</p>
+                <div class="produto-admin-info">
 
-                <div class="acoes">
+                    <h3>${escaparHTML(produto.nome)}</h3>
 
-                    <button
-                        class="botao botao-editar"
-                        data-editar="${produto.id}"
-                    >
-                        Editar
-                    </button>
+                    <p>${escaparHTML(produto.categoria || '')}</p>
 
-                    <button
-                        class="botao botao-excluir"
-                        data-excluir="${produto.id}"
-                    >
-                        Excluir
-                    </button>
+                    <strong>
+                        R$ ${Number(produto.preco).toFixed(2).replace('.', ',')}
+                    </strong>
+
+                    <p>Opções: ${escaparHTML(textoOpcoes)}</p>
+
+                    <p>
+                        Prazo de produção:
+                        ${Number(produto.prazo_producao_dias || 0)} dia(s)
+                    </p>
+
+                    <div class="acoes">
+
+                        <button class="botao"
+                            data-editar="${produto.id}">
+                            Editar
+                        </button>
+
+                        <button class="botao botao-excluir"
+                            data-excluir="${produto.id}">
+                            Excluir
+                        </button>
+
+                    </div>
 
                 </div>
 
-            </div>
+            </article>
 
-        </article>
-    `).join('')
+        `
+
+    }).join('')
 
     container.querySelectorAll('[data-editar]').forEach(botao => {
+
         botao.addEventListener('click', () => {
+
             const produto = data.find(item =>
                 item.id === Number(botao.dataset.editar)
             )
@@ -818,6 +968,7 @@ async function carregarProdutosAdmin() {
     })
 
     container.querySelectorAll('[data-excluir]').forEach(botao => {
+
         botao.addEventListener('click', () => {
             excluirProduto(Number(botao.dataset.excluir))
         })
@@ -830,21 +981,44 @@ async function carregarProdutosAdmin() {
 // ==========================================
 
 function editarProduto(produto) {
+
     produtoEditando = produto
 
     document.querySelector('#titulo-formulario').textContent = 'Editar produto'
-    document.querySelector('#nome').value = produto.nome || ''
-    document.querySelector('#descricao').value = produto.descricao || ''
-    document.querySelector('#preco').value = produto.preco ?? ''
-    document.querySelector('#categoria').value = produto.categoria || ''
-    document.querySelector('#imagem').value = ''
-    document.querySelector('#aviso-imagem').textContent = 'Deixe vazio para manter a foto atual.'
-    document.querySelector('#cores').value = (produto.cores || []).join(', ')
-    document.querySelector('#prazo-producao').value = produto.prazo_producao_dias ?? 3
 
-    document.querySelector('#salvar-produto').textContent = 'Salvar alterações'
+    document.querySelector('#nome').value = produto.nome || ''
+
+    document.querySelector('#descricao').value = produto.descricao || ''
+
+    document.querySelector('#preco').value = produto.preco ?? ''
+
+    document.querySelector('#categoria').value = produto.categoria || ''
+
+    document.querySelector('#imagem').value = ''
+
+    document.querySelector('#aviso-imagem').textContent =
+        'Deixe vazio para manter a foto atual.'
+
+    document.querySelector('#prazo-producao').value =
+        produto.prazo_producao_dias ?? 3
+
+    document.querySelector('#lista-opcoes').innerHTML = ''
+
+    quantidadeOpcoes = 0
+
+    const opcoes = produto.opcoes_personalizadas || []
+
+    opcoes.forEach(opcao => {
+        adicionarGrupoOpcao(opcao)
+    })
+
+    document.querySelector('#salvar-produto').textContent =
+        'Salvar alterações'
+
     document.querySelector('#cancelar-edicao').hidden = false
-    document.querySelector('#form-produto').scrollIntoView({ behavior: 'smooth' })
+
+    document.querySelector('#form-produto')
+        .scrollIntoView({ behavior: 'smooth' })
 }
 
 
@@ -862,7 +1036,9 @@ function cancelarEdicao() {
 // ==========================================
 
 function limparFormulario() {
+
     produtoEditando = null
+    quantidadeOpcoes = 0
 
     document.querySelector('#form-produto').reset()
 
@@ -877,9 +1053,9 @@ function limparFormulario() {
     document.querySelector('#aviso-imagem').textContent =
         'Selecione uma foto para o produto.'
 
-    document.querySelector('#cores').value = ''
-    document.querySelector('#prazo-producao').value = 3
+    document.querySelector('#lista-opcoes').innerHTML = ''
 
+    document.querySelector('#prazo-producao').value = 3
 }
 
 
@@ -888,6 +1064,7 @@ function limparFormulario() {
 // ==========================================
 
 async function excluirProduto(id) {
+
     const confirmar = confirm(
         'Tem certeza de que deseja excluir este produto? Essa ação não poderá ser desfeita.'
     )
@@ -900,9 +1077,8 @@ async function excluirProduto(id) {
         .eq('id', id)
 
     if (error) {
-        alert(
-            'Não foi possível excluir o produto: ' + error.message
-        )
+
+        alert('Não foi possível excluir o produto: ' + error.message)
 
         console.error(error)
 
@@ -924,21 +1100,25 @@ async function excluirProduto(id) {
 // ==========================================
 
 function escaparHTML(texto) {
-    return String(texto).replace(/[&<>"']/g, caractere => ({
+
+    return String(texto ?? '').replace(/[&<>"']/g, caractere => ({
+
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;'
+
     })[caractere])
 }
 
 
 // ==========================================
-// SAIR DO PAINEL
+// SAIR
 // ==========================================
 
 async function sair() {
+
     await supabase.auth.signOut()
 
     mostrarLogin()
@@ -946,10 +1126,11 @@ async function sair() {
 
 
 // ==========================================
-// INICIAR A PÁGINA
+// INICIAR PÁGINA
 // ==========================================
 
 async function iniciar() {
+
     const { data, error } = await supabase.auth.getSession()
 
     if (error) {
@@ -962,6 +1143,7 @@ async function iniciar() {
             .get('recuperar') === '1'
 
     if (estaRecuperando) {
+
         if (data.session) {
             mostrarRedefinirSenha()
         } else {
@@ -986,11 +1168,13 @@ async function iniciar() {
 // ==========================================
 
 supabase.auth.onAuthStateChange((evento) => {
+
     if (evento === 'PASSWORD_RECOVERY') {
         mostrarRedefinirSenha()
     }
 })
 
 
-// Iniciar sistema
+// INICIAR SISTEMA
+
 iniciar()
