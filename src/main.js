@@ -1,4 +1,4 @@
-
+```javascript
 import './style.css'
 import { supabase } from './lib/supabase.js'
 
@@ -201,6 +201,34 @@ estilo.textContent = `
   padding: 18px;
 }
 
+/* BOTÃO VOLTAR AO TOPO */
+
+#voltar-topo {
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #d63384;
+  color: white;
+  font-size: 30px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px #781c4240;
+  transition: 0.3s ease;
+}
+
+#voltar-topo:hover {
+  background: #781c42;
+  transform: scale(1.1);
+}
+
 @media(max-width:600px) {
   .finalizar-carrinho {
     grid-template-columns: 1fr;
@@ -213,14 +241,18 @@ estilo.textContent = `
   .item-carrinho {
     align-items: flex-start;
   }
+
+  #voltar-topo {
+    right: 14px;
+    bottom: 85px;
+    width: 44px;
+    height: 44px;
+    font-size: 26px;
+  }
 }
 `
 
 document.head.appendChild(estilo)
-
-// ==========================================
-// ESTRUTURA DO SITE
-// ==========================================
 
 document.querySelector('#app').innerHTML = `
 <header>
@@ -278,7 +310,6 @@ document.querySelector('#app').innerHTML = `
       Conversar pelo WhatsApp
     </a>
   </section>
-
 </main>
 
 <footer>
@@ -298,29 +329,14 @@ document.querySelector('#app').innerHTML = `
   WhatsApp
 </a>
 
-<!-- BOTÕES FLUTUANTES -->
-
-<div class="navegacao-flutuante">
-
-  <button
-    type="button"
-    class="botao-flutuante"
-    id="voltar-topo"
-    title="Voltar ao topo"
-    aria-label="Voltar ao topo">
-    ↑
-  </button>
-
-  <button
-    type="button"
-    class="botao-flutuante"
-    id="ir-carrinho-flutuante"
-    title="Ir para o carrinho"
-    aria-label="Ir para o carrinho">
-    🛒
-  </button>
-
-</div>
+<!-- BOTÃO VOLTAR AO TOPO -->
+<button
+  type="button"
+  id="voltar-topo"
+  aria-label="Voltar ao topo"
+  title="Voltar ao topo">
+  ↑
+</button>
 `
 
 // ==========================================
@@ -759,9 +775,7 @@ function atualizarCarrinho() {
     </p>
   `
 
-  // ========================================
   // SALVAR OPÇÕES ESCOLHIDAS
-  // ========================================
 
   itens.querySelectorAll('input[data-item]').forEach(input => {
     input.addEventListener('change', () => {
@@ -771,7 +785,6 @@ function atualizarCarrinho() {
       const item = carrinho[indiceItem]
       const grupo = item.grupos[indiceGrupo]
 
-      // Se for escolha única, desmarca qualquer outra alternativa.
       if (!grupo.multipla) {
         const alternativas = itens.querySelectorAll(
           `input[data-item="${indiceItem}"][data-grupo="${indiceGrupo}"]`
@@ -810,9 +823,7 @@ function atualizarCarrinho() {
     })
   })
 
-  // ========================================
   // ALTERAR QUANTIDADE
-  // ========================================
 
   itens.querySelectorAll('[data-quantidade-item]').forEach(input => {
     input.addEventListener('change', () => {
@@ -834,9 +845,7 @@ function atualizarCarrinho() {
     })
   })
 
-  // ========================================
   // OBSERVAÇÕES DO PRODUTO
-  // ========================================
 
   itens.querySelectorAll('[data-observacao-item]').forEach(input => {
     input.addEventListener('input', () => {
@@ -845,9 +854,7 @@ function atualizarCarrinho() {
     })
   })
 
-  // ========================================
   // REMOVER PRODUTO
-  // ========================================
 
   itens.querySelectorAll('[data-remover]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -857,9 +864,7 @@ function atualizarCarrinho() {
     })
   })
 
-  // ========================================
   // SALVAR DADOS GERAIS DO PEDIDO
-  // ========================================
 
   document.querySelector('#data-desejada')
     .addEventListener('change', event => {
@@ -876,9 +881,7 @@ function atualizarCarrinho() {
       dadosPedido.observacoes = event.target.value
     })
 
-  // ========================================
   // FINALIZAR PEDIDO
-  // ========================================
 
   document.querySelector('#finalizar-whatsapp')
     .addEventListener('click', finalizarWhatsApp)
@@ -890,8 +893,6 @@ function atualizarCarrinho() {
 
 function finalizarWhatsApp() {
   if (!carrinho.length) return
-
-  // CONFERIR OPÇÕES OBRIGATÓRIAS E TIPO DE SELEÇÃO
 
   for (const item of carrinho) {
     for (let indiceGrupo = 0; indiceGrupo < (item.grupos || []).length; indiceGrupo++) {
@@ -942,8 +943,6 @@ function finalizarWhatsApp() {
   const dataFormatada = new Date(`${data}T12:00:00`)
     .toLocaleDateString('pt-BR')
 
-  // MONTAR PRODUTOS DA MENSAGEM
-
   const linhas = carrinho.map((item, indice) => {
     const opcoesTexto = item.opcoes.map(opcao =>
       `   ${opcao.nome}: ${opcao.valores.join(', ')}`
@@ -963,8 +962,6 @@ ${opcoesTexto}
     (soma, item) => soma + item.preco * item.quantidade,
     0
   )
-
-  // MENSAGEM FINAL
 
   const mensagem = `
 == Olá! Vim pelo site da MTK Butterfly e gostaria de fazer uma encomenda. ===
@@ -989,7 +986,7 @@ Podemos confirmar a disponibilidade e os detalhes?
 }
 
 // ==========================================
-// BOTÃO DO CARRINHO NO CABEÇALHO
+// BOTÃO PARA IR AO CARRINHO
 // ==========================================
 
 document.querySelector('#ir-carrinho').addEventListener('click', () => {
@@ -999,7 +996,7 @@ document.querySelector('#ir-carrinho').addEventListener('click', () => {
 })
 
 // ==========================================
-// BOTÃO FLUTUANTE: VOLTAR AO TOPO
+// BOTÃO PARA VOLTAR AO TOPO
 // ==========================================
 
 document.querySelector('#voltar-topo').addEventListener('click', () => {
@@ -1010,18 +1007,8 @@ document.querySelector('#voltar-topo').addEventListener('click', () => {
 })
 
 // ==========================================
-// BOTÃO FLUTUANTE: IR AO CARRINHO
-// ==========================================
-
-document.querySelector('#ir-carrinho-flutuante').addEventListener('click', () => {
-  document.querySelector('#carrinho').scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
-  })
-})
-
-// ==========================================
 // INICIAR SITE
 // ==========================================
 
 carregarProdutos()
+```
