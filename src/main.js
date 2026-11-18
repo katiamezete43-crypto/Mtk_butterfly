@@ -1,3 +1,4 @@
+```javascript
 import './style.css'
 import { supabase } from './lib/supabase.js'
 
@@ -24,61 +25,10 @@ estilo.textContent = `
   color: white;
 }
 
-.produto-card .campos-produto {
-  padding: 0 18px 18px;
+.produto-card .produto-info {
+  padding: 18px;
   display: grid;
   gap: 10px;
-}
-
-.campos-produto label {
-  font-size: 13px;
-  color: #781c42;
-  font-weight: 700;
-}
-
-.campos-produto input,
-.campos-produto textarea,
-.finalizar-carrinho input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #e7a5bf;
-  border-radius: 9px;
-  font: inherit;
-  background: white;
-  box-sizing: border-box;
-}
-
-.campos-produto textarea {
-  min-height: 58px;
-  resize: vertical;
-}
-
-.grupo-opcao {
-  border: 1px solid #f0c7d8;
-  padding: 12px;
-  border-radius: 10px;
-  background: #fff9fc;
-}
-
-.grupo-opcao-titulo {
-  display: block;
-  margin-bottom: 9px;
-  color: #781c42;
-  font-weight: 700;
-}
-
-.opcao-alternativa {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 7px 0;
-  font-weight: 400 !important;
-  color: #704257 !important;
-}
-
-.opcao-alternativa input {
-  width: auto;
-  accent-color: #a3295e;
 }
 
 .botao-produto {
@@ -141,9 +91,39 @@ estilo.textContent = `
   margin-top: 12px;
   width: 100%;
 }
+
 .item-carrinho .personalizacao-carrinho .grupo-opcao {
   margin: 0;
 }
+
+.grupo-opcao {
+  border: 1px solid #f0c7d8;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff9fc;
+}
+
+.grupo-opcao-titulo {
+  display: block;
+  margin-bottom: 9px;
+  color: #781c42;
+  font-weight: 700;
+}
+
+.opcao-alternativa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0;
+  font-weight: 400 !important;
+  color: #704257 !important;
+}
+
+.opcao-alternativa input {
+  width: auto;
+  accent-color: #a3295e;
+}
+
 .item-carrinho .campo-carrinho label {
   display: block;
   font-size: 13px;
@@ -151,18 +131,24 @@ estilo.textContent = `
   font-weight: 700;
   margin-bottom: 5px;
 }
+
 .item-carrinho .campo-carrinho input,
-.item-carrinho .campo-carrinho textarea {
+.item-carrinho .campo-carrinho textarea,
+.finalizar-carrinho input {
   width: 100%;
   padding: 9px;
   border: 1px solid #e7a5bf;
   border-radius: 8px;
   box-sizing: border-box;
   font: inherit;
+  background: white;
 }
+
 .item-carrinho .campo-carrinho textarea {
   min-height: 55px;
+  resize: vertical;
 }
+
 .item-carrinho .linha-item {
   flex: 1;
   min-width: 0;
@@ -253,6 +239,7 @@ document.querySelector('#app').innerHTML = `
   <section class="produtos" id="produtos">
     <p class="subtitulo">FEITO ESPECIALMENTE PARA VOCÊ</p>
     <h2 id="titulo-produtos">Nossos produtos</h2>
+
     <div class="grade-produtos" id="lista-produtos">
       <p>Carregando produtos...</p>
     </div>
@@ -260,15 +247,18 @@ document.querySelector('#app').innerHTML = `
 
   <section class="carrinho" id="carrinho">
     <h2>🛒 Meu carrinho</h2>
+
     <div id="itens-carrinho" class="carrinho-vazio">
       Seu carrinho está vazio. Escolha seus presentes favoritos!
     </div>
+
     <div id="resumo-carrinho"></div>
   </section>
 
   <section class="contato" id="contato">
     <h2>Um presente especial começa aqui!</h2>
     <p>Fale com a gente e tire suas dúvidas pelo WhatsApp.</p>
+
     <a href="https://wa.me/${whatsapp}" target="_blank" rel="noopener">
       Conversar pelo WhatsApp
     </a>
@@ -278,6 +268,7 @@ document.querySelector('#app').innerHTML = `
 <footer>
   <div class="marca-rodape">🦋 MTK Butterfly</div>
   <p>Presentes personalizados feitos com amor. 🦋</p>
+
   <p class="creditos">
     Desenvolvido por Kátia Tamaishi Mezete.
     © 2026 — Todos os direitos reservados.
@@ -328,6 +319,8 @@ function obterOpcoes(produto) {
   return []
 }
 
+// CATEGORIAS
+
 function atualizarCategorias() {
   const el = document.querySelector('#lista-categorias')
 
@@ -336,6 +329,7 @@ function atualizarCategorias() {
       type="button"
       class="${categoriaAtual === cat ? 'ativo' : ''}"
       data-categoria="${escaparHTML(cat)}">
+
       ${cat === 'Todas' ? 'Todos os produtos' : escaparHTML(cat)}
     </button>
   `).join('')
@@ -353,7 +347,9 @@ function atualizarCategorias() {
       mostrarProdutos(filtrados)
 
       document.querySelector('#titulo-produtos').textContent =
-        categoriaAtual === 'Todas' ? 'Nossos produtos' : categoriaAtual
+        categoriaAtual === 'Todas'
+          ? 'Nossos produtos'
+          : categoriaAtual
 
       document.querySelector('#produtos').scrollIntoView({
         behavior: 'smooth'
@@ -361,6 +357,8 @@ function atualizarCategorias() {
     })
   })
 }
+
+// CARREGAR PRODUTOS DO SUPABASE
 
 async function carregarProdutos() {
   const { data, error } = await supabase
@@ -380,8 +378,10 @@ async function carregarProdutos() {
 
   if (error) {
     console.error(error)
+
     document.querySelector('#lista-produtos').innerHTML =
       '<p>Não foi possível carregar os produtos. Tente novamente mais tarde.</p>'
+
     return
   }
 
@@ -390,6 +390,95 @@ async function carregarProdutos() {
   atualizarCategorias()
   mostrarProdutos(produtos)
 }
+
+// MOSTRAR PRODUTOS NA VITRINE
+
+function mostrarProdutos(lista) {
+  const container = document.querySelector('#lista-produtos')
+
+  if (!lista.length) {
+    container.innerHTML =
+      '<p>Nenhum produto nesta categoria no momento.</p>'
+
+    return
+  }
+
+  container.innerHTML = lista.map(p => `
+    <article class="produto-card" data-produto="${p.id}">
+
+      <img
+        src="${escaparHTML(p.imagem_url || 'https://placehold.co/500x600?text=MTK+Butterfly')}"
+        alt="${escaparHTML(p.nome)}">
+
+      <div class="produto-info">
+
+        <span class="categoria-produto">
+          ${escaparHTML(p.categoria || 'Outros')}
+        </span>
+
+        <h3>${escaparHTML(p.nome)}</h3>
+
+        <p>${escaparHTML(p.descricao || '')}</p>
+
+        <p class="preco">
+          R$ ${formatarPreco(p.preco)}
+        </p>
+
+        <button
+          type="button"
+          class="botao-produto"
+          data-adicionar="${p.id}">
+
+          Adicionar ao carrinho
+
+        </button>
+
+      </div>
+    </article>
+  `).join('')
+
+  container.querySelectorAll('[data-adicionar]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      adicionarAoCarrinho(Number(btn.dataset.adicionar))
+    })
+  })
+}
+
+// ADICIONAR AO CARRINHO
+
+function adicionarAoCarrinho(id) {
+  const produto = produtos.find(p => Number(p.id) === id)
+
+  if (!produto) return
+
+  carrinho.push({
+    id: produto.id,
+    nome: produto.nome,
+    preco: Number(produto.preco),
+    quantidade: 1,
+
+    grupos: obterOpcoes(produto).map(grupo => ({
+      nome: grupo.nome,
+      alternativas: grupo.alternativas || [],
+      obrigatoria: grupo.obrigatoria ?? true,
+      multipla: grupo.multipla === true
+    })),
+
+    opcoes: [],
+    observacoes: '',
+    prazo: Number(produto.prazo_producao_dias || 0)
+  })
+
+  atualizarCarrinho()
+
+  document.querySelector('#carrinho').scrollIntoView({
+    behavior: 'smooth'
+  })
+
+  alert('Produto adicionado! Agora escolha as personalizações no carrinho. 🦋')
+}
+
+// MONTAR OPÇÕES DE PERSONALIZAÇÃO NO CARRINHO
 
 function montarCamposOpcoesCarrinho(item, indiceItem) {
   const grupos = item.grupos || []
@@ -402,19 +491,33 @@ function montarCamposOpcoesCarrinho(item, indiceItem) {
     if (!alternativas.length) return ''
 
     const multipla = grupo.multipla === true
+
     const tipoInput = multipla ? 'checkbox' : 'radio'
+
     const nomeRadio = `grupo-${indiceItem}-${indiceGrupo}`
-    const selecionadas = item.opcoes.find(opcao => opcao.nome === grupo.nome)?.valores || []
+
+    const selecionadas = item.opcoes.find(
+      opcao => opcao.nome === grupo.nome
+    )?.valores || []
 
     return `
       <div class="grupo-opcao">
+
         <span class="grupo-opcao-titulo">
           ${escaparHTML(grupo.nome)}
+
           ${grupo.obrigatoria ? '*' : '(opcional)'}
-          <small>(${multipla ? 'Pode escolher mais de uma' : 'Escolha apenas uma'})</small>
+
+          <small>
+            (${multipla
+              ? 'Pode escolher mais de uma'
+              : 'Escolha apenas uma'})
+          </small>
         </span>
-        ${alternativas.map((alternativa, posicao) => `
+
+        ${alternativas.map(alternativa => `
           <label class="opcao-alternativa">
+
             <input
               type="${tipoInput}"
               name="${nomeRadio}"
@@ -422,76 +525,18 @@ function montarCamposOpcoesCarrinho(item, indiceItem) {
               data-grupo="${indiceGrupo}"
               value="${escaparHTML(alternativa)}"
               ${selecionadas.includes(alternativa) ? 'checked' : ''}>
+
             ${escaparHTML(alternativa)}
+
           </label>
         `).join('')}
+
       </div>
     `
   }).join('')
 }
 
-function mostrarProdutos(lista) {
-  const container = document.querySelector('#lista-produtos')
-
-  if (!lista.length) {
-    container.innerHTML = '<p>Nenhum produto nesta categoria no momento.</p>'
-    return
-  }
-
-  container.innerHTML = lista.map(p => `
-    <article class="produto-card" data-produto="${p.id}">
-      <img
-        src="${escaparHTML(p.imagem_url || 'https://placehold.co/500x600?text=MTK+Butterfly')}"
-        alt="${escaparHTML(p.nome)}">
-
-      <div class="produto-info">
-        <span class="categoria-produto">
-          ${escaparHTML(p.categoria || 'Outros')}
-        </span>
-        <h3>${escaparHTML(p.nome)}</h3>
-        <p>${escaparHTML(p.descricao || '')}</p>
-        <p class="preco">R$ ${formatarPreco(p.preco)}</p>
-        <button
-          type="button"
-          class="botao-produto"
-          data-adicionar="${p.id}">
-          Adicionar ao carrinho
-        </button>
-      </div>
-    </article>
-  `).join('')
-
-  container.querySelectorAll('[data-adicionar]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      adicionarAoCarrinho(Number(btn.dataset.adicionar))
-    })
-  })
-}
-
-function adicionarAoCarrinho(id) {
-  const produto = produtos.find(p => Number(p.id) === id)
-  if (!produto) return
-
-  carrinho.push({
-    id: produto.id,
-    nome: produto.nome,
-    preco: Number(produto.preco),
-    quantidade: 1,
-    grupos: obterOpcoes(produto).map(grupo => ({
-      nome: grupo.nome,
-      alternativas: grupo.alternativas || [],
-      obrigatoria: grupo.obrigatoria ?? true,
-      multipla: grupo.multipla === true
-    })),
-    opcoes: [],
-    observacoes: '',
-    prazo: Number(produto.prazo_producao_dias || 0)
-  })
-
-  atualizarCarrinho()
-  document.querySelector('#carrinho').scrollIntoView({ behavior: 'smooth' })
-  alert('Produto adicionado! Agora escolha as personalizações no carrinho. 🦋')
-}
+// ATUALIZAR CARRINHO
 
 function atualizarCarrinho() {
   document.querySelector('#total-itens').textContent =
@@ -502,9 +547,12 @@ function atualizarCarrinho() {
 
   if (!carrinho.length) {
     itens.className = 'carrinho-vazio'
+
     itens.textContent =
       'Seu carrinho está vazio. Escolha seus presentes favoritos!'
+
     resumo.innerHTML = ''
+
     return
   }
 
@@ -512,14 +560,21 @@ function atualizarCarrinho() {
 
   itens.innerHTML = carrinho.map((item, indice) => `
     <div class="item-carrinho">
+
       <div class="linha-item">
+
         <strong>${escaparHTML(item.nome)}</strong>
 
         <div class="personalizacao-carrinho">
+
           ${montarCamposOpcoesCarrinho(item, indice)}
 
           <div class="campo-carrinho">
-            <label for="qtd-carrinho-${indice}">Quantidade</label>
+
+            <label for="qtd-carrinho-${indice}">
+              Quantidade
+            </label>
+
             <input
               id="qtd-carrinho-${indice}"
               type="number"
@@ -527,22 +582,38 @@ function atualizarCarrinho() {
               step="1"
               value="${item.quantidade}"
               data-quantidade-item="${indice}">
+
           </div>
 
           <div class="campo-carrinho">
-            <label for="obs-carrinho-${indice}">Personalização / observações (opcional)</label>
+
+            <label for="obs-carrinho-${indice}">
+              Personalização / observações (opcional)
+            </label>
+
             <textarea
               id="obs-carrinho-${indice}"
               data-observacao-item="${indice}"
               placeholder="Conte como deseja seu presente">${escaparHTML(item.observacoes)}</textarea>
+
           </div>
+
         </div>
 
-        <small>Prazo de produção: ${item.prazo} dia(s)</small>
-        <strong>R$ ${formatarPreco(item.preco * item.quantidade)}</strong>
+        <small>
+          Prazo de produção: ${item.prazo} dia(s)
+        </small>
+
+        <strong>
+          R$ ${formatarPreco(item.preco * item.quantidade)}
+        </strong>
+
       </div>
 
-      <button type="button" data-remover="${indice}">Remover</button>
+      <button type="button" data-remover="${indice}">
+        Remover
+      </button>
+
     </div>
   `).join('')
 
@@ -552,30 +623,60 @@ function atualizarCarrinho() {
   )
 
   resumo.innerHTML = `
-    <p class="preco">Total estimado: R$ ${formatarPreco(total)}</p>
+    <p class="preco">
+      Total estimado: R$ ${formatarPreco(total)}
+    </p>
 
     <div class="finalizar-carrinho">
+
       <div class="campo">
-        <label for="data-desejada">Para qual dia deseja?</label>
+
+        <label for="data-desejada">
+          Para qual dia deseja?
+        </label>
+
         <input
           id="data-desejada"
           type="date"
           min="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)}">
+
       </div>
 
       <div class="campo">
-        <label for="nome-cliente">Seu nome (opcional)</label>
-        <input id="nome-cliente" type="text" placeholder="Como podemos te chamar?">
+
+        <label for="nome-cliente">
+          Seu nome (opcional)
+        </label>
+
+        <input
+          id="nome-cliente"
+          type="text"
+          placeholder="Como podemos te chamar?">
+
       </div>
 
       <div class="campo largura-total">
-        <label for="obs-geral">Observações do pedido (opcional)</label>
-        <input id="obs-geral" type="text" placeholder="Mais algum detalhe?">
+
+        <label for="obs-geral">
+          Observações do pedido (opcional)
+        </label>
+
+        <input
+          id="obs-geral"
+          type="text"
+          placeholder="Mais algum detalhe?">
+
       </div>
 
-      <button type="button" class="botao-principal largura-total" id="finalizar-whatsapp">
+      <button
+        type="button"
+        class="botao-principal largura-total"
+        id="finalizar-whatsapp">
+
         Enviar carrinho pelo WhatsApp
+
       </button>
+
     </div>
 
     <p class="prazo">
@@ -584,126 +685,187 @@ function atualizarCarrinho() {
     </p>
   `
 
-  itens.querySelectorAll('[data-opcao-item], input[data-item]').forEach(input => {
+  // SALVAR OPÇÕES ESCOLHIDAS
+
+  itens.querySelectorAll('input[data-item]').forEach(input => {
     input.addEventListener('change', () => {
       const indiceItem = Number(input.dataset.item)
       const indiceGrupo = Number(input.dataset.grupo)
+
       const item = carrinho[indiceItem]
       const grupo = item.grupos[indiceGrupo]
+
       const marcadas = [
         ...itens.querySelectorAll(
-          \`input[data-item="\${indiceItem}"][data-grupo="\${indiceGrupo}"]:checked\`
+          `input[data-item="${indiceItem}"][data-grupo="${indiceGrupo}"]:checked`
         )
       ].map(campo => campo.value)
 
-      const existente = item.opcoes.findIndex(opcao => opcao.nome === grupo.nome)
-      if (existente >= 0) item.opcoes.splice(existente, 1)
+      const existente = item.opcoes.findIndex(
+        opcao => opcao.nome === grupo.nome
+      )
+
+      if (existente >= 0) {
+        item.opcoes.splice(existente, 1)
+      }
+
       if (marcadas.length) {
-        item.opcoes.push({ nome: grupo.nome, valores: marcadas })
+        item.opcoes.push({
+          nome: grupo.nome,
+          valores: marcadas
+        })
       }
     })
   })
+
+  // ALTERAR QUANTIDADE
 
   itens.querySelectorAll('[data-quantidade-item]').forEach(input => {
     input.addEventListener('change', () => {
       const quantidade = Number(input.value)
+
       if (!Number.isInteger(quantidade) || quantidade < 1) {
         alert('Informe uma quantidade válida.')
-        input.value = carrinho[Number(input.dataset.quantidadeItem)].quantidade
+
+        input.value =
+          carrinho[Number(input.dataset.quantidadeItem)].quantidade
+
         return
       }
-      carrinho[Number(input.dataset.quantidadeItem)].quantidade = quantidade
+
+      carrinho[Number(input.dataset.quantidadeItem)].quantidade =
+        quantidade
+
       atualizarCarrinho()
     })
   })
 
+  // OBSERVAÇÕES DO PRODUTO
+
   itens.querySelectorAll('[data-observacao-item]').forEach(input => {
     input.addEventListener('input', () => {
-      carrinho[Number(input.dataset.observacaoItem)].observacoes = input.value
+      carrinho[Number(input.dataset.observacaoItem)].observacoes =
+        input.value
     })
   })
+
+  // REMOVER PRODUTO
 
   itens.querySelectorAll('[data-remover]').forEach(btn => {
     btn.addEventListener('click', () => {
       carrinho.splice(Number(btn.dataset.remover), 1)
+
       atualizarCarrinho()
     })
   })
+
+  // FINALIZAR PEDIDO
 
   document.querySelector('#finalizar-whatsapp')
     .addEventListener('click', finalizarWhatsApp)
 }
 
+// FINALIZAR PELO WHATSAPP
+
 function finalizarWhatsApp() {
   if (!carrinho.length) return
 
+  // CONFERIR OPÇÕES OBRIGATÓRIAS
+
   for (const item of carrinho) {
     for (const grupo of item.grupos || []) {
-      const escolha = item.opcoes.find(opcao => opcao.nome === grupo.nome)
-      if (grupo.obrigatoria && (!escolha || escolha.valores.length === 0)) {
-        alert(\`Escolha uma opção em "\${grupo.nome}" para o produto "\${item.nome}".\`)
+      const escolha = item.opcoes.find(
+        opcao => opcao.nome === grupo.nome
+      )
+
+      if (
+        grupo.obrigatoria &&
+        (!escolha || escolha.valores.length === 0)
+      ) {
+        alert(
+          `Escolha uma opção em "${grupo.nome}" para o produto "${item.nome}".`
+        )
+
         return
       }
-      if (grupo.multipla !== true && escolha && escolha.valores.length > 1) {
-        alert(\`Escolha somente uma alternativa em "\${grupo.nome}".\`)
+
+      if (
+        grupo.multipla !== true &&
+        escolha &&
+        escolha.valores.length > 1
+      ) {
+        alert(
+          `Escolha somente uma alternativa em "${grupo.nome}".`
+        )
+
         return
       }
     }
   }
 
   const data = document.querySelector('#data-desejada').value
+
   const nome = document.querySelector('#nome-cliente').value.trim()
-  const observacoesGerais = document.querySelector('#obs-geral').value.trim()
+
+  const observacoesGerais =
+    document.querySelector('#obs-geral').value.trim()
 
   if (!data) {
     alert('Informe a data em que deseja receber seu pedido.')
+
     return
   }
 
-  const dataFormatada = new Date(\`\${data}T12:00:00\`)
+  const dataFormatada = new Date(`${data}T12:00:00`)
     .toLocaleDateString('pt-BR')
+
+  // MONTAR PRODUTOS DA MENSAGEM
 
   const linhas = carrinho.map((item, indice) => {
     const opcoesTexto = item.opcoes.map(opcao =>
-      \`   \${opcao.nome}: \${opcao.valores.join(', ')}\`
-    ).join('\\n')
+      `   ${opcao.nome}: ${opcao.valores.join(', ')}`
+    ).join('\n')
 
-    return \`
-\${indice + 1}. \${item.nome}
-   Quantidade: \${item.quantidade}
-\${opcoesTexto}
-   Valor: R$ \${formatarPreco(item.preco * item.quantidade)}
-   Prazo cadastrado: \${item.prazo} dia(s)
-   \${item.observacoes ? \`Personalização: \${item.observacoes}\` : ''}
-    \`.trim()
-  }).join('\\n\\n')
+    return `
+${indice + 1}. ${item.nome}
+   Quantidade: ${item.quantidade}
+${opcoesTexto}
+   Valor: R$ ${formatarPreco(item.preco * item.quantidade)}
+   Prazo cadastrado: ${item.prazo} dia(s)
+   ${item.observacoes ? `Personalização: ${item.observacoes}` : ''}
+    `.trim()
+  }).join('\n\n')
 
   const total = carrinho.reduce(
     (soma, item) => soma + item.preco * item.quantidade,
     0
   )
 
-  const mensagem = \`
+  // MENSAGEM FINAL
+
+  const mensagem = `
 == Olá! Vim pelo site da MTK Butterfly e gostaria de fazer uma encomenda. ===
 
-\${nome ? \`Nome: \${nome}\\n\` : ''}
+${nome ? `Nome: ${nome}\n` : ''}
 PRODUTOS:
 
-\${linhas}
+${linhas}
 
-Total estimado: R$ \${formatarPreco(total)}
-Data desejada: \${dataFormatada}
-\${observacoesGerais ? \`Observações gerais: \${observacoesGerais}\` : ''}
+Total estimado: R$ ${formatarPreco(total)}
+Data desejada: ${dataFormatada}
+${observacoesGerais ? `Observações gerais: ${observacoesGerais}` : ''}
 
 Podemos confirmar a disponibilidade e os detalhes?
-  \`.trim()
+  `.trim()
 
   window.open(
-    \`https://wa.me/\${whatsapp}?text=\${encodeURIComponent(mensagem)}\`,
+    `https://wa.me/${whatsapp}?text=${encodeURIComponent(mensagem)}`,
     '_blank',
     'noopener'
   )
 }
+
+// BOTÃO PARA IR AO CARRINHO
 
 document.querySelector('#ir-carrinho').addEventListener('click', () => {
   document.querySelector('#carrinho').scrollIntoView({
@@ -711,4 +873,7 @@ document.querySelector('#ir-carrinho').addEventListener('click', () => {
   })
 })
 
+// INICIAR SITE
+
 carregarProdutos()
+```
