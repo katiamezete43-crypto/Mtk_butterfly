@@ -673,7 +673,7 @@ ${opcoesTexto}
   )
 
   const mensagem = `
-=== Olá! Vim pelo site da MTK Butterfly e gostaria de fazer uma encomenda. ===
+== Olá! Vim pelo site da MTK Butterfly e gostaria de fazer uma encomenda. ===
 
 ${nome ? `Nome: ${nome}\n` : ''}
 PRODUTOS:
