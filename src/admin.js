@@ -515,6 +515,9 @@ function mostrarPainel() {
                             <option value="Cestas">Cestas</option>
                             <option value="Cestas de chocolate">Cestas de chocolate</option>
                             <option value="Aniversário">Aniversário</option>
+                            <option value="Personalizados">Personalizados</option>
+                            <option value="Natal">Natal</option>
+                            <option value="Camisetas / Moletons">Camisetas / Moletons</option>
                             <option value="Outros">Outros</option>
                         </select>
 
