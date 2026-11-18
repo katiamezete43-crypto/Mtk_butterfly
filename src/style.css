@@ -416,4 +416,66 @@ footer {
     width: 50px;
     height: 50px;
   }
+  /* ==========================================
+   BOTÕES FLUTUANTES DE NAVEGAÇÃO
+========================================== */
+
+.navegacao-flutuante {
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+}
+
+.botao-flutuante {
+  width: 50px;
+  height: 50px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #781c42;
+  color: white;
+  font-size: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px #781c4240;
+  transition: 0.3s ease;
+}
+
+.botao-flutuante:hover {
+  background: #d63384;
+  transform: scale(1.1);
+}
+
+/* BOTÃO DE VOLTAR AO TOPO */
+
+#voltar-topo {
+  background: #d63384;
+}
+
+/* BOTÃO DO CARRINHO */
+
+#ir-carrinho-flutuante {
+  background: #781c42;
+}
+
+/* CELULARES */
+
+@media (max-width: 600px) {
+  .navegacao-flutuante {
+    right: 14px;
+    bottom: 85px;
+    gap: 10px;
+  }
+
+  .botao-flutuante {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
 }
