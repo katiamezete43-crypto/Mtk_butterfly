@@ -218,6 +218,10 @@ estilo.textContent = `
 
 document.head.appendChild(estilo)
 
+// ==========================================
+// ESTRUTURA DO SITE
+// ==========================================
+
 document.querySelector('#app').innerHTML = `
 <header>
   <a href="#inicio" class="marca-mtk">
@@ -239,7 +243,8 @@ document.querySelector('#app').innerHTML = `
   </div>
 </header>
 
-<main>
+<main id="inicio">
+
   <section class="categorias" id="categorias">
     <p class="subtitulo">ENCONTRE O PRESENTE IDEAL</p>
     <h2>O que você procura?</h2>
@@ -273,6 +278,7 @@ document.querySelector('#app').innerHTML = `
       Conversar pelo WhatsApp
     </a>
   </section>
+
 </main>
 
 <footer>
@@ -291,6 +297,30 @@ document.querySelector('#app').innerHTML = `
    rel="noopener">
   WhatsApp
 </a>
+
+<!-- BOTÕES FLUTUANTES -->
+
+<div class="navegacao-flutuante">
+
+  <button
+    type="button"
+    class="botao-flutuante"
+    id="voltar-topo"
+    title="Voltar ao topo"
+    aria-label="Voltar ao topo">
+    ↑
+  </button>
+
+  <button
+    type="button"
+    class="botao-flutuante"
+    id="ir-carrinho-flutuante"
+    title="Ir para o carrinho"
+    aria-label="Ir para o carrinho">
+    🛒
+  </button>
+
+</div>
 `
 
 // ==========================================
@@ -534,7 +564,6 @@ function montarCamposOpcoesCarrinho(item, indiceItem) {
 
     const nomeRadio = `grupo-${indiceItem}-${indiceGrupo}`
 
-    // Recupera as escolhas usando o índice do grupo.
     const selecionadas = item.opcoes.find(
       opcao => opcao.indiceGrupo === indiceGrupo
     )?.valores || []
@@ -761,8 +790,6 @@ function atualizarCarrinho() {
         )
       ].map(campo => campo.value)
 
-      // Identifica o grupo pelo índice para evitar conflitos
-      // caso dois grupos tenham nomes iguais.
       const existente = item.opcoes.findIndex(
         opcao => opcao.indiceGrupo === indiceGrupo
       )
@@ -962,12 +989,34 @@ Podemos confirmar a disponibilidade e os detalhes?
 }
 
 // ==========================================
-// BOTÃO PARA IR AO CARRINHO
+// BOTÃO DO CARRINHO NO CABEÇALHO
 // ==========================================
 
 document.querySelector('#ir-carrinho').addEventListener('click', () => {
   document.querySelector('#carrinho').scrollIntoView({
     behavior: 'smooth'
+  })
+})
+
+// ==========================================
+// BOTÃO FLUTUANTE: VOLTAR AO TOPO
+// ==========================================
+
+document.querySelector('#voltar-topo').addEventListener('click', () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+})
+
+// ==========================================
+// BOTÃO FLUTUANTE: IR AO CARRINHO
+// ==========================================
+
+document.querySelector('#ir-carrinho-flutuante').addEventListener('click', () => {
+  document.querySelector('#carrinho').scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
   })
 })
 
