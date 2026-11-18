@@ -1,1180 +1,703 @@
+import './style.css'
 import { supabase } from './lib/supabase.js'
 
-const app = document.querySelector('#admin-app')
+const whatsapp = '5535984258711'
 
-let produtoEditando = null
-let quantidadeOpcoes = 0
+const categorias = [
+  'Buquês de borboletas',
+  'Buquês de rosas',
+  'Cestas',
+  'Cestas de chocolate',
+  'Aniversário',
+  'Outros'
+]
 
-// ==========================================
-// ESTILIZAÇÃO
-// ==========================================
+let produtos = []
+let carrinho = []
+let categoriaAtual = 'Todas'
 
 const estilo = document.createElement('style')
 
 estilo.textContent = `
-* { box-sizing: border-box; }
-
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #fff0f5;
-    color: #444;
+.categorias-lista button.ativo {
+  background: #781c42;
+  color: white;
 }
 
-.painel {
-    min-height: 100vh;
-    padding: 30px 15px;
+.produto-card .campos-produto {
+  padding: 0 18px 18px;
+  display: grid;
+  gap: 10px;
 }
 
-.container {
-    max-width: 950px;
-    margin: auto;
+.campos-produto label {
+  font-size: 13px;
+  color: #781c42;
+  font-weight: 700;
 }
 
-.cabecalho {
-    background: white;
-    padding: 25px;
-    border-radius: 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 15px #d98ba822;
+.campos-produto input,
+.campos-produto textarea,
+.finalizar-carrinho input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e7a5bf;
+  border-radius: 9px;
+  font: inherit;
+  background: white;
+  box-sizing: border-box;
 }
 
-h1, h2 { color: #d63384; }
-
-.cabecalho h1 {
-    margin: 0;
-    font-size: 24px;
+.campos-produto textarea {
+  min-height: 58px;
+  resize: vertical;
 }
 
-.cabecalho p {
-    margin-bottom: 0;
-    color: #777;
+.grupo-opcao {
+  border: 1px solid #f0c7d8;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff9fc;
 }
 
-.cartao {
-    background: white;
-    padding: 30px;
-    border-radius: 18px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 15px #d98ba822;
+.grupo-opcao-titulo {
+  display: block;
+  margin-bottom: 9px;
+  color: #781c42;
+  font-weight: 700;
 }
 
-label {
-    display: block;
-    margin: 16px 0 7px;
-    font-weight: bold;
+.opcao-alternativa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0;
+  font-weight: 400 !important;
+  color: #704257 !important;
 }
 
-input, textarea, select {
-    width: 100%;
-    padding: 13px;
-    border: 1px solid #efb4cf;
-    border-radius: 9px;
-    font-size: 15px;
+.opcao-alternativa input {
+  width: auto;
+  accent-color: #a3295e;
 }
 
-textarea {
-    resize: vertical;
-    min-height: 85px;
+.botao-produto {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
 }
 
-.botao {
-    padding: 13px 20px;
-    background: #d63384;
-    color: white;
-    border: none;
-    border-radius: 9px;
-    cursor: pointer;
-    font-size: 15px;
-    margin-top: 10px;
+.prazo {
+  font-size: 13px;
+  color: #8b5269;
+  margin: 8px 0;
 }
 
-.botao:hover { background: #b8256c; }
-.botao:disabled { opacity: .6; cursor: wait; }
-.botao-secundario { background: #777; }
-.botao-excluir { background: #b52d55; }
-.botao-sair { background: #777; }
-
-.opcao-card {
-    background: #fff6fa;
-    border: 1px solid #efb4cf;
-    padding: 18px;
-    border-radius: 12px;
-    margin-top: 15px;
+.carrinho-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.opcao-card h3 {
-    color: #d63384;
-    margin-top: 0;
+.botao-carrinho {
+  border: 0;
+  border-radius: 25px;
+  background: #781c42;
+  color: white;
+  padding: 12px 18px;
+  cursor: pointer;
+  font-weight: 700;
 }
 
-.alternativa-linha {
-    display: flex;
-    gap: 8px;
-    margin: 8px 0;
+.carrinho {
+  max-width: 900px;
+  margin: 0 auto 45px;
+  padding: 25px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 5px 20px #0000000b;
 }
 
-.alternativa-linha input {
-    flex: 1;
+.item-carrinho {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1d8e3;
+  align-items: center;
 }
 
-.alternativa-linha button {
-    border: none;
-    background: #b52d55;
-    color: white;
-    border-radius: 8px;
-    padding: 8px 13px;
-    cursor: pointer;
+.item-carrinho small {
+  display: block;
+  color: #85536a;
+  margin-top: 4px;
 }
 
-.checkbox-linha {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 12px 0;
+.item-carrinho button {
+  border: 0;
+  background: #fff0f5;
+  color: #a3295e;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
-.checkbox-linha input {
-    width: auto;
+.finalizar-carrinho {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
 }
 
-.checkbox-linha label {
-    margin: 0;
+.finalizar-carrinho label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #781c42;
 }
 
-.produto-admin {
-    border: 1px solid #f1c5d9;
-    border-radius: 12px;
-    padding: 15px;
-    margin-top: 15px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
+.finalizar-carrinho .campo {
+  display: grid;
+  gap: 6px;
 }
 
-.produto-admin img {
-    width: 85px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 8px;
+.finalizar-carrinho .largura-total {
+  grid-column: 1 / -1;
 }
 
-.produto-admin-info { flex: 1; }
-.produto-admin-info h3 { margin: 0 0 8px; }
-
-.acoes {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+.carrinho-vazio {
+  color: #85536a;
+  text-align: center;
+  padding: 18px;
 }
 
-.link-recuperacao {
-    background: none;
-    border: none;
-    color: #d63384;
-    cursor: pointer;
-    margin-top: 18px;
-    font-size: 14px;
-    text-decoration: underline;
-}
+@media(max-width:600px) {
+  .finalizar-carrinho {
+    grid-template-columns: 1fr;
+  }
 
-#mensagem, #mensagem-produto {
-    margin-top: 15px;
-    color: #d63384;
-    font-weight: bold;
-}
+  .finalizar-carrinho .largura-total {
+    grid-column: auto;
+  }
 
-@media (max-width: 600px) {
-    .cabecalho {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .cartao { padding: 20px; }
-
-    .produto-admin {
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
+  .item-carrinho {
+    align-items: flex-start;
+  }
 }
 `
 
 document.head.appendChild(estilo)
 
-
-// ==========================================
-// VERIFICA ADMINISTRADOR
-// ==========================================
-
-async function verificarAdministrador(usuario) {
-
-    const { data, error } = await supabase
-        .from('administradores')
-        .select('user_id')
-        .eq('user_id', usuario.id)
-        .maybeSingle()
-
-    if (error || !data) {
-        await supabase.auth.signOut()
-
-        mostrarLogin(
-            'Você não tem permissão para acessar este painel.'
-        )
-
-        return
-    }
-
-    mostrarPainel()
-}
-
-
-// ==========================================
-// LOGIN
-// ==========================================
-
-function mostrarLogin(texto = '') {
-
-    app.innerHTML = `
-        <div class="painel">
-            <div class="container">
-                <div class="cartao"
-                    style="max-width:420px;margin:100px auto;text-align:center">
-
-                    <h1>MTK BUTTERFLY</h1>
-                    <p>Área exclusiva do administrador</p>
-
-                    <form id="form-login">
-
-                        <label>E-mail</label>
-                        <input type="email" id="email" required>
-
-                        <label>Senha</label>
-                        <input type="password" id="senha" required>
-
-                        <br><br>
-
-                        <button class="botao" type="submit">
-                            Entrar no painel
-                        </button>
-
-                    </form>
-
-                    <button
-                        type="button"
-                        class="link-recuperacao"
-                        id="esqueci-senha">
-                        Esqueci minha senha
-                    </button>
-
-                    <div id="mensagem">${escaparHTML(texto)}</div>
-
-                </div>
-            </div>
-        </div>
-    `
-
-    document
-        .querySelector('#form-login')
-        .addEventListener('submit', entrar)
-
-    document
-        .querySelector('#esqueci-senha')
-        .addEventListener('click', solicitarRecuperacao)
-}
-
-
-// ==========================================
-// RECUPERAR SENHA
-// ==========================================
-
-async function solicitarRecuperacao() {
-
-    const email = document.querySelector('#email').value.trim()
-    const mensagem = document.querySelector('#mensagem')
-    const botao = document.querySelector('#esqueci-senha')
-
-    if (!email) {
-        mensagem.textContent = 'Digite seu e-mail primeiro.'
-        return
-    }
-
-    botao.disabled = true
-    mensagem.textContent = 'Enviando e-mail de recuperação...'
-
-    try {
-
-        const { error } = await supabase.auth.resetPasswordForEmail(
-            email,
-            {
-                redirectTo: `${window.location.origin}/admin.html?recuperar=1`
-            }
-        )
-
-        if (error) throw error
-
-        mensagem.textContent =
-            'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha. Verifique sua caixa de entrada.'
-
-    } catch (erro) {
-
-        mensagem.textContent =
-            'Não foi possível enviar o e-mail: ' + erro.message
-
-    } finally {
-        botao.disabled = false
-    }
-}
-
-
-// ==========================================
-// REDEFINIR SENHA
-// ==========================================
-
-function mostrarRedefinirSenha(texto = '') {
-
-    app.innerHTML = `
-        <div class="painel">
-            <div class="container">
-
-                <div class="cartao"
-                    style="max-width:420px;margin:100px auto;text-align:center">
-
-                    <h1>MTK BUTTERFLY</h1>
-                    <p>Cadastre sua nova senha</p>
-
-                    <form id="form-nova-senha">
-
-                        <label>Nova senha</label>
-                        <input type="password" id="nova-senha"
-                            minlength="6" required>
-
-                        <label>Confirme a nova senha</label>
-                        <input type="password" id="confirmar-senha"
-                            minlength="6" required>
-
-                        <br><br>
-
-                        <button class="botao" type="submit"
-                            id="botao-nova-senha">
-                            Salvar nova senha
-                        </button>
-
-                    </form>
-
-                    <div id="mensagem">${escaparHTML(texto)}</div>
-
-                </div>
-            </div>
-        </div>
-    `
-
-    document
-        .querySelector('#form-nova-senha')
-        .addEventListener('submit', salvarNovaSenha)
-}
-
-
-async function salvarNovaSenha(evento) {
-
-    evento.preventDefault()
-
-    const senha = document.querySelector('#nova-senha').value
-    const confirmacao = document.querySelector('#confirmar-senha').value
-
-    const mensagem = document.querySelector('#mensagem')
-    const botao = document.querySelector('#botao-nova-senha')
-
-    if (senha.length < 6) {
-        mensagem.textContent = 'A senha precisa ter pelo menos 6 caracteres.'
-        return
-    }
-
-    if (senha !== confirmacao) {
-        mensagem.textContent = 'As senhas não são iguais.'
-        return
-    }
-
-    botao.disabled = true
-    mensagem.textContent = 'Atualizando sua senha...'
-
-    try {
-
-        const { error } = await supabase.auth.updateUser({
-            password: senha
-        })
-
-        if (error) throw error
-
-        await supabase.auth.signOut()
-
-        window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-        )
-
-        mostrarLogin(
-            'Senha alterada com sucesso! Agora entre com sua nova senha. ❤️'
-        )
-
-    } catch (erro) {
-
-        mensagem.textContent =
-            'Não foi possível alterar a senha: ' + erro.message
-
-        botao.disabled = false
-    }
-}
-
-
-// ==========================================
-// ENTRAR
-// ==========================================
-
-async function entrar(evento) {
-
-    evento.preventDefault()
-
-    const email = document.querySelector('#email').value.trim()
-    const senha = document.querySelector('#senha').value
-
-    const mensagem = document.querySelector('#mensagem')
-
-    mensagem.textContent = 'Verificando acesso...'
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: senha
-    })
-
-    if (error) {
-        mensagem.textContent = 'E-mail ou senha incorretos.'
-        return
-    }
-
-    await verificarAdministrador(data.user)
-}
-
-
-// ==========================================
-// PAINEL ADMINISTRATIVO
-// ==========================================
-
-function mostrarPainel() {
-
-    produtoEditando = null
-    quantidadeOpcoes = 0
-
-    app.innerHTML = `
-        <div class="painel">
-            <div class="container">
-
-                <header class="cabecalho">
-
-                    <div>
-                        <h1>MTK BUTTERFLY</h1>
-                        <p>Gerencie os produtos da sua vitrine virtual</p>
-                    </div>
-
-                    <button class="botao botao-sair" id="sair">
-                        Sair
-                    </button>
-
-                </header>
-
-                <section class="cartao">
-
-                    <h2 id="titulo-formulario">Cadastrar produto</h2>
-
-                    <form id="form-produto">
-
-                        <label>Nome do produto</label>
-                        <input type="text" id="nome" required>
-
-                        <label>Descrição</label>
-                        <textarea id="descricao"></textarea>
-
-                        <label>Preço (R$)</label>
-                        <input type="number" id="preco"
-                            min="0.01" step="0.01" required>
-
-                        <label>Categoria</label>
-
-                        <select id="categoria" required>
-                            <option value="">Selecione</option>
-                            <option value="Buquês de borboletas">Buquês de borboletas</option>
-                            <option value="Buquês de rosas">Buquês de rosas</option>
-                            <option value="Cestas">Cestas</option>
-                            <option value="Cestas de chocolate">Cestas de chocolate</option>
-                            <option value="Aniversário">Aniversário</option>
-                            <option value="Outros">Outros</option>
-                        </select>
-
-                        <label>Foto do produto</label>
-                        <input type="file" id="imagem" accept="image/*">
-
-                        <p id="aviso-imagem">
-                            Selecione uma foto para o produto.
-                        </p>
-
-                        <hr>
-
-                        <h2>Personalização do produto</h2>
-
-                        <p>
-                            Adicione opções para o cliente escolher,
-                            como cor, tamanho, chocolate ou material.
-                        </p>
-
-                        <div id="lista-opcoes"></div>
-
-                        <button type="button" class="botao"
-                            id="adicionar-opcao">
-                            + Adicionar grupo de opções
-                        </button>
-
-                        <br>
-
-                        <label>Prazo de produção (dias)</label>
-                        <input type="number" id="prazo-producao"
-                            min="0" step="1" value="3" required>
-
-                        <br><br>
-
-                        <button type="submit" class="botao"
-                            id="salvar-produto">
-                            Cadastrar produto
-                        </button>
-
-                        <button type="button"
-                            class="botao botao-secundario"
-                            id="cancelar-edicao" hidden>
-                            Cancelar edição
-                        </button>
-
-                        <div id="mensagem-produto"></div>
-
-                    </form>
-
-                </section>
-
-                <section class="cartao">
-
-                    <h2>Produtos cadastrados</h2>
-
-                    <div id="produtos-cadastrados">
-                        Carregando produtos...
-                    </div>
-
-                </section>
-
-            </div>
-        </div>
-    `
-
-    document.querySelector('#sair')
-        .addEventListener('click', sair)
-
-    document.querySelector('#form-produto')
-        .addEventListener('submit', salvarProduto)
-
-    document.querySelector('#cancelar-edicao')
-        .addEventListener('click', cancelarEdicao)
-
-    document.querySelector('#adicionar-opcao')
-        .addEventListener('click', () => adicionarGrupoOpcao())
-
-    carregarProdutosAdmin()
-}
-
-
-// ==========================================
-// CRIAR GRUPO DE OPÇÕES
-// ==========================================
-
-function adicionarGrupoOpcao(dados = null) {
-
-    quantidadeOpcoes++
-
-    const id = quantidadeOpcoes
-
-    const container = document.querySelector('#lista-opcoes')
-
-    const card = document.createElement('div')
-
-    card.className = 'opcao-card'
-    card.dataset.grupo = id
-
-    card.innerHTML = `
-
-        <h3>Grupo de opções</h3>
-
-        <label>Nome da opção</label>
-
-        <input
-            type="text"
-            class="nome-opcao"
-            placeholder="Ex.: Cor, Tamanho, Tipo de chocolate"
-            value="${escaparHTML(dados?.nome || '')}"
-            required
-        >
-
-        <label>Alternativas disponíveis</label>
-
-        <div class="alternativas"></div>
-
-        <button type="button" class="botao adicionar-alternativa">
-            + Adicionar alternativa
-        </button>
-
-        <div class="checkbox-linha">
-            <input type="checkbox" class="opcao-obrigatoria"
-                ${dados?.obrigatoria ? 'checked' : ''}>
-            <label>Cliente precisa escolher esta opção</label>
-        </div>
-
-        <button type="button" class="botao botao-excluir remover-grupo">
-            Remover grupo
-        </button>
-    `
-
-    container.appendChild(card)
-
-    const alternativas = card.querySelector('.alternativas')
-
-    if (dados?.alternativas?.length) {
-
-        dados.alternativas.forEach(alternativa => {
-            adicionarAlternativa(alternativas, alternativa)
-        })
-
-    } else {
-
-        adicionarAlternativa(alternativas)
-    }
-
-    card.querySelector('.adicionar-alternativa')
-        .addEventListener('click', () => {
-            adicionarAlternativa(alternativas)
-        })
-
-    card.querySelector('.remover-grupo')
-        .addEventListener('click', () => {
-            card.remove()
-        })
-}
-
-
-// ==========================================
-// ADICIONAR ALTERNATIVA
-// ==========================================
-
-function adicionarAlternativa(container, valor = '') {
-
-    const linha = document.createElement('div')
-
-    linha.className = 'alternativa-linha'
-
-    linha.innerHTML = `
-        <input
-            type="text"
-            class="valor-alternativa"
-            placeholder="Ex.: Rosa"
-            value="${escaparHTML(valor)}"
-            required
-        >
-
-        <button type="button">X</button>
-    `
-
-    container.appendChild(linha)
-
-    linha.querySelector('button').addEventListener('click', () => {
-        linha.remove()
-    })
-}
-
-
-// ==========================================
-// LER OPÇÕES DO FORMULÁRIO
-// ==========================================
-
-function obterOpcoesFormulario() {
-
-    const grupos = document.querySelectorAll('.opcao-card')
-
-    const opcoes = []
-
-    grupos.forEach(grupo => {
-
-        const nome = grupo.querySelector('.nome-opcao').value.trim()
-
-        const alternativas = [
-            ...grupo.querySelectorAll('.valor-alternativa')
-        ]
-            .map(input => input.value.trim())
-            .filter(Boolean)
-
-        const obrigatoria =
-            grupo.querySelector('.opcao-obrigatoria').checked
-
-        if (!nome) {
-            throw new Error('Informe o nome de todos os grupos de opções.')
-        }
-
-        if (!alternativas.length) {
-            throw new Error(`Adicione alternativas para "${nome}".`)
-        }
-
-        opcoes.push({
-            nome,
-            alternativas,
-            obrigatoria,
-            multipla: true
-        })
-    })
-
-    return opcoes
-}
-
-
-// ==========================================
-// ENVIAR IMAGEM
-// ==========================================
-
-async function enviarImagem(arquivo) {
-
-    const extensao = arquivo.name.split('.').pop()
-
-    const nomeArquivo = `${crypto.randomUUID()}.${extensao}`
-
-    const caminho = `produtos/${nomeArquivo}`
-
-    const { error } = await supabase.storage
-        .from('imagens-produtos')
-        .upload(caminho, arquivo)
-
-    if (error) throw error
-
-    const { data } = supabase.storage
-        .from('imagens-produtos')
-        .getPublicUrl(caminho)
-
-    return data.publicUrl
-}
-
-
-// ==========================================
-// SALVAR OU EDITAR PRODUTO
-// ==========================================
-
-async function salvarProduto(evento) {
-
-    evento.preventDefault()
-
-    const mensagem = document.querySelector('#mensagem-produto')
-    const botao = document.querySelector('#salvar-produto')
-
-    botao.disabled = true
-    mensagem.textContent = 'Salvando...'
-
-    try {
-
-        const nome = document.querySelector('#nome').value.trim()
-
-        const descricao = document.querySelector('#descricao').value.trim()
-
-        const preco = Number(document.querySelector('#preco').value)
-
-        const categoria = document.querySelector('#categoria').value
-
-        const opcoesPersonalizadas = obterOpcoesFormulario()
-
-        const prazoProducao = Number(
-            document.querySelector('#prazo-producao').value
-        )
-
-        if (!Number.isInteger(prazoProducao) || prazoProducao < 0) {
-            throw new Error('Informe um prazo de produção válido.')
-        }
-
-        const arquivo = document.querySelector('#imagem').files[0]
-
-        let imagemUrl = produtoEditando?.imagem_url || null
-
-        if (arquivo) {
-            imagemUrl = await enviarImagem(arquivo)
-        }
-
-        const dadosProduto = {
-            nome,
-            descricao,
-            preco,
-            categoria,
-            imagem_url: imagemUrl,
-            cores: [],
-            opcoes_personalizadas: opcoesPersonalizadas,
-            prazo_producao_dias: prazoProducao
-        }
-
-        if (produtoEditando) {
-
-            const { error } = await supabase
-                .from('produto')
-                .update(dadosProduto)
-                .eq('id', produtoEditando.id)
-
-            if (error) throw error
-
-            mensagem.textContent = 'Produto atualizado com sucesso! ❤️'
-
-        } else {
-
-            const { error } = await supabase
-                .from('produto')
-                .insert([dadosProduto])
-
-            if (error) throw error
-
-            mensagem.textContent = 'Produto cadastrado com sucesso! ❤️'
-        }
-
-        limparFormulario()
-
-        await carregarProdutosAdmin()
-
-    } catch (erro) {
-
-        console.error(erro)
-
-        mensagem.textContent = 'Erro: ' + erro.message
-
-    } finally {
-
-        botao.disabled = false
-    }
-}
-
-
-// ==========================================
-// CARREGAR PRODUTOS
-// ==========================================
-
-async function carregarProdutosAdmin() {
-
-    const container = document.querySelector('#produtos-cadastrados')
-
-    const { data, error } = await supabase
-        .from('produto')
-        .select(`
-            id,
-            nome,
-            descricao,
-            preco,
-            categoria,
-            imagem_url,
-            cores,
-            opcoes_personalizadas,
-            prazo_producao_dias
-        `)
-        .order('created_at', { ascending: false })
-
-    if (error) {
-
-        container.textContent = 'Não foi possível carregar os produtos.'
-
-        console.error(error)
-
-        return
-    }
-
-    if (!data || data.length === 0) {
-
-        container.textContent = 'Nenhum produto cadastrado.'
-
-        return
-    }
-
-    container.innerHTML = data.map(produto => {
-
-        const opcoes = produto.opcoes_personalizadas || []
-
-        const textoOpcoes = opcoes.length
-            ? opcoes.map(o => `${o.nome}: ${o.alternativas.join(', ')}`).join(' | ')
-            : 'Sem opções personalizadas'
-
-        return `
-
-            <article class="produto-admin">
-
-                <img
-                    src="${produto.imagem_url || 'https://placehold.co/100x120?text=Sem+foto'}"
-                    alt="Foto do produto"
-                >
-
-                <div class="produto-admin-info">
-
-                    <h3>${escaparHTML(produto.nome)}</h3>
-
-                    <p>${escaparHTML(produto.categoria || '')}</p>
-
-                    <strong>
-                        R$ ${Number(produto.preco).toFixed(2).replace('.', ',')}
-                    </strong>
-
-                    <p>Opções: ${escaparHTML(textoOpcoes)}</p>
-
-                    <p>
-                        Prazo de produção:
-                        ${Number(produto.prazo_producao_dias || 0)} dia(s)
-                    </p>
-
-                    <div class="acoes">
-
-                        <button class="botao"
-                            data-editar="${produto.id}">
-                            Editar
-                        </button>
-
-                        <button class="botao botao-excluir"
-                            data-excluir="${produto.id}">
-                            Excluir
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-        `
-
-    }).join('')
-
-    container.querySelectorAll('[data-editar]').forEach(botao => {
-
-        botao.addEventListener('click', () => {
-
-            const produto = data.find(item =>
-                item.id === Number(botao.dataset.editar)
-            )
-
-            editarProduto(produto)
-        })
-    })
-
-    container.querySelectorAll('[data-excluir]').forEach(botao => {
-
-        botao.addEventListener('click', () => {
-            excluirProduto(Number(botao.dataset.excluir))
-        })
-    })
-}
-
-
-// ==========================================
-// EDITAR PRODUTO
-// ==========================================
-
-function editarProduto(produto) {
-
-    produtoEditando = produto
-
-    document.querySelector('#titulo-formulario').textContent = 'Editar produto'
-
-    document.querySelector('#nome').value = produto.nome || ''
-
-    document.querySelector('#descricao').value = produto.descricao || ''
-
-    document.querySelector('#preco').value = produto.preco ?? ''
-
-    document.querySelector('#categoria').value = produto.categoria || ''
-
-    document.querySelector('#imagem').value = ''
-
-    document.querySelector('#aviso-imagem').textContent =
-        'Deixe vazio para manter a foto atual.'
-
-    document.querySelector('#prazo-producao').value =
-        produto.prazo_producao_dias ?? 3
-
-    document.querySelector('#lista-opcoes').innerHTML = ''
-
-    quantidadeOpcoes = 0
-
-    const opcoes = produto.opcoes_personalizadas || []
-
-    opcoes.forEach(opcao => {
-        adicionarGrupoOpcao(opcao)
-    })
-
-    document.querySelector('#salvar-produto').textContent =
-        'Salvar alterações'
-
-    document.querySelector('#cancelar-edicao').hidden = false
-
-    document.querySelector('#form-produto')
-        .scrollIntoView({ behavior: 'smooth' })
-}
-
-
-// ==========================================
-// CANCELAR EDIÇÃO
-// ==========================================
-
-function cancelarEdicao() {
-    limparFormulario()
-}
-
-
-// ==========================================
-// LIMPAR FORMULÁRIO
-// ==========================================
-
-function limparFormulario() {
-
-    produtoEditando = null
-    quantidadeOpcoes = 0
-
-    document.querySelector('#form-produto').reset()
-
-    document.querySelector('#titulo-formulario').textContent =
-        'Cadastrar produto'
-
-    document.querySelector('#salvar-produto').textContent =
-        'Cadastrar produto'
-
-    document.querySelector('#cancelar-edicao').hidden = true
-
-    document.querySelector('#aviso-imagem').textContent =
-        'Selecione uma foto para o produto.'
-
-    document.querySelector('#lista-opcoes').innerHTML = ''
-
-    document.querySelector('#prazo-producao').value = 3
-}
-
-
-// ==========================================
-// EXCLUIR PRODUTO
-// ==========================================
-
-async function excluirProduto(id) {
-
-    const confirmar = confirm(
-        'Tem certeza de que deseja excluir este produto? Essa ação não poderá ser desfeita.'
-    )
-
-    if (!confirmar) return
-
-    const { error } = await supabase
-        .from('produto')
-        .delete()
-        .eq('id', id)
-
-    if (error) {
-
-        alert('Não foi possível excluir o produto: ' + error.message)
-
-        console.error(error)
-
-        return
-    }
-
-    if (produtoEditando && produtoEditando.id === id) {
-        limparFormulario()
-    }
-
-    alert('Produto excluído com sucesso!')
-
-    carregarProdutosAdmin()
-}
-
-
-// ==========================================
-// PROTEGER TEXTOS
-// ==========================================
+document.querySelector('#app').innerHTML = `
+<header>
+  <a href="#inicio" class="marca-mtk">
+    <img src="/logo_mtk_butterfly_redonda.png" alt="Logo MTK Butterfly">
+    <span>MTK Butterfly</span>
+  </a>
+
+  <nav>
+    <a href="#inicio">Início</a>
+    <a href="#categorias">Categorias</a>
+    <a href="#produtos">Produtos</a>
+    <a href="#contato">Contato</a>
+  </nav>
+
+  <div class="carrinho-topo">
+    <button class="botao-carrinho" id="ir-carrinho">
+      🛒 Carrinho (<span id="total-itens">0</span>)
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="categorias" id="categorias">
+    <p class="subtitulo">ENCONTRE O PRESENTE IDEAL</p>
+    <h2>O que você procura?</h2>
+    <div class="categorias-lista" id="lista-categorias"></div>
+  </section>
+
+  <section class="produtos" id="produtos">
+    <p class="subtitulo">FEITO ESPECIALMENTE PARA VOCÊ</p>
+    <h2 id="titulo-produtos">Nossos produtos</h2>
+    <div class="grade-produtos" id="lista-produtos">
+      <p>Carregando produtos...</p>
+    </div>
+  </section>
+
+  <section class="carrinho" id="carrinho">
+    <h2>🛒 Meu carrinho</h2>
+    <div id="itens-carrinho" class="carrinho-vazio">
+      Seu carrinho está vazio. Escolha seus presentes favoritos!
+    </div>
+    <div id="resumo-carrinho"></div>
+  </section>
+
+  <section class="contato" id="contato">
+    <h2>Um presente especial começa aqui!</h2>
+    <p>Fale com a gente e tire suas dúvidas pelo WhatsApp.</p>
+    <a href="https://wa.me/${whatsapp}" target="_blank" rel="noopener">
+      Conversar pelo WhatsApp
+    </a>
+  </section>
+</main>
+
+<footer>
+  <div class="marca-rodape">🦋 MTK Butterfly</div>
+  <p>Presentes personalizados feitos com amor. 🦋</p>
+  <p class="creditos">
+    Desenvolvido por Kátia Tamaishi Mezete.
+    © 2026 — Todos os direitos reservados.
+  </p>
+</footer>
+
+<a class="whatsapp-flutuante"
+   href="https://wa.me/${whatsapp}"
+   target="_blank"
+   rel="noopener">
+  WhatsApp
+</a>
+`
 
 function escaparHTML(texto) {
-
-    return String(texto ?? '').replace(/[&<>"']/g, caractere => ({
-
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-
-    })[caractere])
+  return String(texto ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]))
 }
 
-
-// ==========================================
-// SAIR
-// ==========================================
-
-async function sair() {
-
-    await supabase.auth.signOut()
-
-    mostrarLogin()
+function formatarPreco(valor) {
+  return Number(valor || 0).toFixed(2).replace('.', ',')
 }
 
+function obterOpcoes(produto) {
+  const opcoes = Array.isArray(produto.opcoes_personalizadas)
+    ? produto.opcoes_personalizadas
+    : []
 
-// ==========================================
-// INICIAR PÁGINA
-// ==========================================
+  if (opcoes.length) {
+    return opcoes
+  }
 
-async function iniciar() {
+  // Compatibilidade com produtos antigos que possuem apenas cores.
+  if (Array.isArray(produto.cores) && produto.cores.length) {
+    return [{
+      nome: 'Cor',
+      alternativas: produto.cores,
+      obrigatoria: true,
+      multipla: true
+    }]
+  }
 
-    const { data, error } = await supabase.auth.getSession()
-
-    if (error) {
-        mostrarLogin('Não foi possível verificar seu acesso.')
-        return
-    }
-
-    const estaRecuperando =
-        new URLSearchParams(window.location.search)
-            .get('recuperar') === '1'
-
-    if (estaRecuperando) {
-
-        if (data.session) {
-            mostrarRedefinirSenha()
-        } else {
-            mostrarLogin(
-                'O link de recuperação expirou ou é inválido. Solicite um novo link.'
-            )
-        }
-
-        return
-    }
-
-    if (data.session) {
-        await verificarAdministrador(data.session.user)
-    } else {
-        mostrarLogin()
-    }
+  return []
 }
 
+function atualizarCategorias() {
+  const el = document.querySelector('#lista-categorias')
 
-// ==========================================
-// DETECTAR RECUPERAÇÃO DE SENHA
-// ==========================================
+  el.innerHTML = ['Todas', ...categorias].map(cat => `
+    <button
+      type="button"
+      class="${categoriaAtual === cat ? 'ativo' : ''}"
+      data-categoria="${escaparHTML(cat)}">
+      ${cat === 'Todas' ? 'Todos os produtos' : escaparHTML(cat)}
+    </button>
+  `).join('')
 
-supabase.auth.onAuthStateChange((evento) => {
+  el.querySelectorAll('[data-categoria]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      categoriaAtual = btn.dataset.categoria
 
-    if (evento === 'PASSWORD_RECOVERY') {
-        mostrarRedefinirSenha()
+      atualizarCategorias()
+
+      const filtrados = categoriaAtual === 'Todas'
+        ? produtos
+        : produtos.filter(p => p.categoria === categoriaAtual)
+
+      mostrarProdutos(filtrados)
+
+      document.querySelector('#titulo-produtos').textContent =
+        categoriaAtual === 'Todas' ? 'Nossos produtos' : categoriaAtual
+
+      document.querySelector('#produtos').scrollIntoView({
+        behavior: 'smooth'
+      })
+    })
+  })
+}
+
+async function carregarProdutos() {
+  const { data, error } = await supabase
+    .from('produto')
+    .select(`
+      id,
+      nome,
+      descricao,
+      preco,
+      categoria,
+      imagem_url,
+      cores,
+      prazo_producao_dias,
+      opcoes_personalizadas
+    `)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error(error)
+    document.querySelector('#lista-produtos').innerHTML =
+      '<p>Não foi possível carregar os produtos. Tente novamente mais tarde.</p>'
+    return
+  }
+
+  produtos = data || []
+
+  atualizarCategorias()
+  mostrarProdutos(produtos)
+}
+
+function montarCamposOpcoes(produto) {
+  const grupos = obterOpcoes(produto)
+
+  return grupos.map((grupo, indice) => {
+    const alternativas = Array.isArray(grupo.alternativas)
+      ? grupo.alternativas
+      : []
+
+    if (!alternativas.length) return ''
+
+    return `
+      <div class="grupo-opcao"
+           data-grupo-opcao="${indice}">
+
+        <span class="grupo-opcao-titulo">
+          ${escaparHTML(grupo.nome)}
+          ${grupo.obrigatoria ? '*' : '(opcional)'}
+        </span>
+
+        ${alternativas.map(alternativa => `
+          <label class="opcao-alternativa">
+            <input
+              type="checkbox"
+              data-indice-grupo="${indice}"
+              value="${escaparHTML(alternativa)}">
+            ${escaparHTML(alternativa)}
+          </label>
+        `).join('')}
+
+      </div>
+    `
+  }).join('')
+}
+
+function mostrarProdutos(lista) {
+  const container = document.querySelector('#lista-produtos')
+
+  if (!lista.length) {
+    container.innerHTML = '<p>Nenhum produto nesta categoria no momento.</p>'
+    return
+  }
+
+  container.innerHTML = lista.map(p => `
+    <article class="produto-card" data-produto="${p.id}">
+
+      <img
+        src="${escaparHTML(p.imagem_url || 'https://placehold.co/500x600?text=MTK+Butterfly')}"
+        alt="${escaparHTML(p.nome)}">
+
+      <div class="produto-info">
+        <span class="categoria-produto">
+          ${escaparHTML(p.categoria || 'Outros')}
+        </span>
+
+        <h3>${escaparHTML(p.nome)}</h3>
+
+        <p>${escaparHTML(p.descricao || '')}</p>
+
+        <p class="prazo">
+          ⏳ Prazo de produção:
+          ${Number(p.prazo_producao_dias || 0)} dia(s)
+        </p>
+
+        <p class="preco">
+          R$ ${formatarPreco(p.preco)}
+        </p>
+      </div>
+
+      <div class="campos-produto">
+
+        ${montarCamposOpcoes(p)}
+
+        <label>Quantidade</label>
+
+        <input
+          class="qtd-produto"
+          type="number"
+          min="1"
+          step="1"
+          value="1">
+
+        <label>Personalização / observações</label>
+
+        <textarea
+          class="obs-produto"
+          placeholder="Conte como deseja seu presente (opcional)">
+        </textarea>
+
+        <button
+          type="button"
+          class="botao-produto"
+          data-adicionar="${p.id}">
+          Adicionar ao carrinho
+        </button>
+
+      </div>
+    </article>
+  `).join('')
+
+  container.querySelectorAll('[data-adicionar]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      adicionarAoCarrinho(Number(btn.dataset.adicionar))
+    })
+  })
+}
+
+function adicionarAoCarrinho(id) {
+  const produto = produtos.find(p => Number(p.id) === id)
+
+  if (!produto) return
+
+  const card = document.querySelector(
+    `.produto-card[data-produto="${id}"]`
+  )
+
+  const quantidade = Number(
+    card.querySelector('.qtd-produto').value
+  )
+
+  const observacoes = card.querySelector('.obs-produto').value.trim()
+
+  if (!Number.isInteger(quantidade) || quantidade < 1) {
+    alert('Informe uma quantidade válida.')
+    return
+  }
+
+  const grupos = obterOpcoes(produto)
+  const opcoesSelecionadas = []
+
+  for (let indice = 0; indice < grupos.length; indice++) {
+    const grupo = grupos[indice]
+
+    const marcadas = [
+      ...card.querySelectorAll(
+        `input[data-indice-grupo="${indice}"]:checked`
+      )
+    ].map(input => input.value)
+
+    if (grupo.obrigatoria && marcadas.length === 0) {
+      alert(`Escolha pelo menos uma opção em: ${grupo.nome}.`)
+      return
     }
+
+    if (marcadas.length) {
+      opcoesSelecionadas.push({
+        nome: grupo.nome,
+        valores: marcadas
+      })
+    }
+  }
+
+  carrinho.push({
+    id: produto.id,
+    nome: produto.nome,
+    preco: Number(produto.preco),
+    quantidade,
+    opcoes: opcoesSelecionadas,
+    observacoes,
+    prazo: Number(produto.prazo_producao_dias || 0)
+  })
+
+  atualizarCarrinho()
+
+  alert('Produto adicionado ao carrinho! 🦋')
+}
+
+function atualizarCarrinho() {
+  document.querySelector('#total-itens').textContent =
+    carrinho.reduce((soma, item) => soma + item.quantidade, 0)
+
+  const itens = document.querySelector('#itens-carrinho')
+  const resumo = document.querySelector('#resumo-carrinho')
+
+  if (!carrinho.length) {
+    itens.className = 'carrinho-vazio'
+    itens.textContent =
+      'Seu carrinho está vazio. Escolha seus presentes favoritos!'
+    resumo.innerHTML = ''
+    return
+  }
+
+  itens.className = ''
+
+  itens.innerHTML = carrinho.map((item, indice) => {
+    const textoOpcoes = item.opcoes.map(opcao =>
+      `${escaparHTML(opcao.nome)}: ${opcao.valores.map(escaparHTML).join(', ')}`
+    ).join('<br>')
+
+    return `
+      <div class="item-carrinho">
+
+        <div>
+          <strong>${escaparHTML(item.nome)}</strong>
+
+          <small>
+            Quantidade: ${item.quantidade}
+            ${textoOpcoes ? `<br>${textoOpcoes}` : ''}
+            <br>${item.prazo} dia(s) de produção
+
+            ${item.observacoes
+              ? `<br>Observações: ${escaparHTML(item.observacoes)}`
+              : ''}
+          </small>
+
+          <strong>
+            R$ ${formatarPreco(item.preco * item.quantidade)}
+          </strong>
+        </div>
+
+        <button type="button" data-remover="${indice}">
+          Remover
+        </button>
+
+      </div>
+    `
+  }).join('')
+
+  const total = carrinho.reduce(
+    (soma, item) => soma + item.preco * item.quantidade,
+    0
+  )
+
+  resumo.innerHTML = `
+    <p class="preco">
+      Total estimado: R$ ${formatarPreco(total)}
+    </p>
+
+    <div class="finalizar-carrinho">
+
+      <div class="campo">
+        <label for="data-desejada">Para qual dia deseja?</label>
+        <input
+          id="data-desejada"
+          type="date"
+          min="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)}">
+      </div>
+
+      <div class="campo">
+        <label for="nome-cliente">Seu nome (opcional)</label>
+        <input
+          id="nome-cliente"
+          type="text"
+          placeholder="Como podemos te chamar?">
+      </div>
+
+      <div class="campo largura-total">
+        <label for="obs-geral">Observações do pedido (opcional)</label>
+        <input
+          id="obs-geral"
+          type="text"
+          placeholder="Mais algum detalhe?">
+      </div>
+
+      <button
+        type="button"
+        class="botao-principal largura-total"
+        id="finalizar-whatsapp">
+        Enviar carrinho pelo WhatsApp
+      </button>
+
+    </div>
+
+    <p class="prazo">
+      Os prazos são estimativas de produção.
+      A data e a disponibilidade serão confirmadas diretamente pelo WhatsApp.
+    </p>
+  `
+
+  itens.querySelectorAll('[data-remover]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      carrinho.splice(Number(btn.dataset.remover), 1)
+      atualizarCarrinho()
+    })
+  })
+
+  document.querySelector('#finalizar-whatsapp')
+    .addEventListener('click', finalizarWhatsApp)
+}
+
+function finalizarWhatsApp() {
+  if (!carrinho.length) return
+
+  const data = document.querySelector('#data-desejada').value
+  const nome = document.querySelector('#nome-cliente').value.trim()
+  const observacoesGerais = document.querySelector('#obs-geral').value.trim()
+
+  if (!data) {
+    alert('Informe a data em que deseja receber seu pedido.')
+    return
+  }
+
+  const dataFormatada = new Date(`${data}T12:00:00`)
+    .toLocaleDateString('pt-BR')
+
+  const linhas = carrinho.map((item, indice) => {
+    const opcoesTexto = item.opcoes.map(opcao =>
+      `   ${opcao.nome}: ${opcao.valores.join(', ')}`
+    ).join('\n')
+
+    return `
+${indice + 1}. ${item.nome}
+   Quantidade: ${item.quantidade}
+${opcoesTexto}
+   Valor: R$ ${formatarPreco(item.preco * item.quantidade)}
+   Prazo cadastrado: ${item.prazo} dia(s)
+   ${item.observacoes ? `Personalização: ${item.observacoes}` : ''}
+    `.trim()
+  }).join('\n\n')
+
+  const total = carrinho.reduce(
+    (soma, item) => soma + item.preco * item.quantidade,
+    0
+  )
+
+  const mensagem = `
+=== Olá! Vim pelo site da MTK Butterfly e gostaria de fazer uma encomenda. ===
+
+${nome ? `Nome: ${nome}\n` : ''}
+PRODUTOS:
+
+${linhas}
+
+Total estimado: R$ ${formatarPreco(total)}
+Data desejada: ${dataFormatada}
+${observacoesGerais ? `Observações gerais: ${observacoesGerais}` : ''}
+
+Podemos confirmar a disponibilidade e os detalhes?
+  `.trim()
+
+  window.open(
+    `https://wa.me/${whatsapp}?text=${encodeURIComponent(mensagem)}`,
+    '_blank',
+    'noopener'
+  )
+}
+
+document.querySelector('#ir-carrinho').addEventListener('click', () => {
+  document.querySelector('#carrinho').scrollIntoView({
+    behavior: 'smooth'
+  })
 })
 
-
-// INICIAR SISTEMA
-
-iniciar()
+carregarProdutos()
