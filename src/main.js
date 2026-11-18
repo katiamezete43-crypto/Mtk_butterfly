@@ -128,6 +128,7 @@ estilo.textContent = `
 .opcao-alternativa input {
   width: auto;
   accent-color: #a3295e;
+  cursor: pointer;
 }
 
 .item-carrinho .campo-carrinho label {
@@ -289,6 +290,10 @@ document.querySelector('#app').innerHTML = `
 </a>
 `
 
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
+
 function escaparHTML(texto) {
   return String(texto ?? '').replace(/[&<>"']/g, c => ({
     '&': '&amp;',
@@ -303,29 +308,38 @@ function formatarPreco(valor) {
   return Number(valor || 0).toFixed(2).replace('.', ',')
 }
 
+// ==========================================
+// OBTER OPÇÕES PERSONALIZADAS
+// ==========================================
+
 function obterOpcoes(produto) {
   const opcoes = Array.isArray(produto.opcoes_personalizadas)
     ? produto.opcoes_personalizadas
     : []
 
   if (opcoes.length) {
-    return opcoes
+    return opcoes.map(grupo => ({
+      ...grupo,
+      multipla: grupo.multipla === true
+    }))
   }
 
-  // Compatibilidade com produtos antigos que possuem apenas cores.
+  // Produtos antigos com cores terão escolha única.
   if (Array.isArray(produto.cores) && produto.cores.length) {
     return [{
       nome: 'Cor',
       alternativas: produto.cores,
       obrigatoria: true,
-      multipla: true
+      multipla: false
     }]
   }
 
   return []
 }
 
+// ==========================================
 // CATEGORIAS
+// ==========================================
 
 function atualizarCategorias() {
   const el = document.querySelector('#lista-categorias')
@@ -364,7 +378,9 @@ function atualizarCategorias() {
   })
 }
 
+// ==========================================
 // CARREGAR PRODUTOS DO SUPABASE
+// ==========================================
 
 async function carregarProdutos() {
   const { data, error } = await supabase
@@ -397,7 +413,9 @@ async function carregarProdutos() {
   mostrarProdutos(produtos)
 }
 
+// ==========================================
 // MOSTRAR PRODUTOS NA VITRINE
+// ==========================================
 
 function mostrarProdutos(lista) {
   const container = document.querySelector('#lista-produtos')
@@ -455,7 +473,9 @@ function mostrarProdutos(lista) {
   })
 }
 
+// ==========================================
 // ADICIONAR AO CARRINHO
+// ==========================================
 
 function adicionarAoCarrinho(id) {
   const produto = produtos.find(p => Number(p.id) === id)
@@ -489,7 +509,9 @@ function adicionarAoCarrinho(id) {
   alert('Produto adicionado! Agora escolha as personalizações no carrinho. 🦋')
 }
 
+// ==========================================
 // MONTAR OPÇÕES DE PERSONALIZAÇÃO NO CARRINHO
+// ==========================================
 
 function montarCamposOpcoesCarrinho(item, indiceItem) {
   const grupos = item.grupos || []
@@ -503,12 +525,15 @@ function montarCamposOpcoesCarrinho(item, indiceItem) {
 
     const multipla = grupo.multipla === true
 
+    // Escolha única = radio.
+    // Escolha múltipla = checkbox.
     const tipoInput = multipla ? 'checkbox' : 'radio'
 
     const nomeRadio = `grupo-${indiceItem}-${indiceGrupo}`
 
+    // Recupera as escolhas usando o índice do grupo.
     const selecionadas = item.opcoes.find(
-      opcao => opcao.nome === grupo.nome
+      opcao => opcao.indiceGrupo === indiceGrupo
     )?.valores || []
 
     return `
@@ -547,7 +572,9 @@ function montarCamposOpcoesCarrinho(item, indiceItem) {
   }).join('')
 }
 
+// ==========================================
 // ATUALIZAR CARRINHO
+// ==========================================
 
 function atualizarCarrinho() {
   document.querySelector('#total-itens').textContent =
@@ -700,7 +727,9 @@ function atualizarCarrinho() {
     </p>
   `
 
+  // ========================================
   // SALVAR OPÇÕES ESCOLHIDAS
+  // ========================================
 
   itens.querySelectorAll('input[data-item]').forEach(input => {
     input.addEventListener('change', () => {
@@ -710,14 +739,29 @@ function atualizarCarrinho() {
       const item = carrinho[indiceItem]
       const grupo = item.grupos[indiceGrupo]
 
+      // Se for escolha única, desmarca qualquer outra alternativa.
+      if (!grupo.multipla) {
+        const alternativas = itens.querySelectorAll(
+          `input[data-item="${indiceItem}"][data-grupo="${indiceGrupo}"]`
+        )
+
+        alternativas.forEach(alternativa => {
+          if (alternativa !== input) {
+            alternativa.checked = false
+          }
+        })
+      }
+
       const marcadas = [
         ...itens.querySelectorAll(
           `input[data-item="${indiceItem}"][data-grupo="${indiceGrupo}"]:checked`
         )
       ].map(campo => campo.value)
 
+      // Identifica o grupo pelo índice para evitar conflitos
+      // caso dois grupos tenham nomes iguais.
       const existente = item.opcoes.findIndex(
-        opcao => opcao.nome === grupo.nome
+        opcao => opcao.indiceGrupo === indiceGrupo
       )
 
       if (existente >= 0) {
@@ -727,13 +771,18 @@ function atualizarCarrinho() {
       if (marcadas.length) {
         item.opcoes.push({
           nome: grupo.nome,
-          valores: marcadas
+          indiceGrupo,
+          valores: grupo.multipla
+            ? marcadas
+            : [input.value]
         })
       }
     })
   })
 
+  // ========================================
   // ALTERAR QUANTIDADE
+  // ========================================
 
   itens.querySelectorAll('[data-quantidade-item]').forEach(input => {
     input.addEventListener('change', () => {
@@ -755,7 +804,9 @@ function atualizarCarrinho() {
     })
   })
 
+  // ========================================
   // OBSERVAÇÕES DO PRODUTO
+  // ========================================
 
   itens.querySelectorAll('[data-observacao-item]').forEach(input => {
     input.addEventListener('input', () => {
@@ -764,7 +815,9 @@ function atualizarCarrinho() {
     })
   })
 
+  // ========================================
   // REMOVER PRODUTO
+  // ========================================
 
   itens.querySelectorAll('[data-remover]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -774,7 +827,9 @@ function atualizarCarrinho() {
     })
   })
 
+  // ========================================
   // SALVAR DADOS GERAIS DO PEDIDO
+  // ========================================
 
   document.querySelector('#data-desejada')
     .addEventListener('change', event => {
@@ -791,23 +846,29 @@ function atualizarCarrinho() {
       dadosPedido.observacoes = event.target.value
     })
 
+  // ========================================
   // FINALIZAR PEDIDO
+  // ========================================
 
   document.querySelector('#finalizar-whatsapp')
     .addEventListener('click', finalizarWhatsApp)
 }
 
+// ==========================================
 // FINALIZAR PELO WHATSAPP
+// ==========================================
 
 function finalizarWhatsApp() {
   if (!carrinho.length) return
 
-  // CONFERIR OPÇÕES OBRIGATÓRIAS
+  // CONFERIR OPÇÕES OBRIGATÓRIAS E TIPO DE SELEÇÃO
 
   for (const item of carrinho) {
-    for (const grupo of item.grupos || []) {
+    for (let indiceGrupo = 0; indiceGrupo < (item.grupos || []).length; indiceGrupo++) {
+      const grupo = item.grupos[indiceGrupo]
+
       const escolha = item.opcoes.find(
-        opcao => opcao.nome === grupo.nome
+        opcao => opcao.indiceGrupo === indiceGrupo
       )
 
       if (
@@ -897,7 +958,9 @@ Podemos confirmar a disponibilidade e os detalhes?
   )
 }
 
+// ==========================================
 // BOTÃO PARA IR AO CARRINHO
+// ==========================================
 
 document.querySelector('#ir-carrinho').addEventListener('click', () => {
   document.querySelector('#carrinho').scrollIntoView({
@@ -905,6 +968,8 @@ document.querySelector('#ir-carrinho').addEventListener('click', () => {
   })
 })
 
+// ==========================================
 // INICIAR SITE
+// ==========================================
 
 carregarProdutos()
