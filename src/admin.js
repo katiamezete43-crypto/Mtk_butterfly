@@ -372,7 +372,7 @@ function mostrarRedefinirSenha(texto = '') {
                         <input type="password" id="nova-senha"
                             minlength="6" required>
 
-                        <label>Confirme a nova senha</label>
+                        <label>Confirme sua senha</label>
                         <input type="password" id="confirmar-senha"
                             minlength="6" required>
 
@@ -468,7 +468,7 @@ async function entrar(evento) {
 
 
 // ==========================================
-// PAINEL
+// PAINEL ADMINISTRATIVO
 // ==========================================
 
 function mostrarPainel() {
@@ -534,10 +534,10 @@ function mostrarPainel() {
                         <h2>Opções personalizadas</h2>
 
                         <p class="texto-ajuda">
-                            Cadastre as opções que a cliente poderá escolher
-                            para este produto. Exemplo: Cor, tamanho, chocolate
-                            ou peso. A cliente poderá marcar mais de uma
-                            alternativa dentro de cada grupo.
+                            Cadastre grupos como tamanho, cor, chocolate ou peso.
+                            Em cada grupo, escolha se a cliente poderá selecionar
+                            somente uma alternativa ou várias alternativas.
+                            Exemplo: tamanho = escolha única; cores = múltipla escolha.
                         </p>
 
                         <div id="grupos-opcoes"></div>
@@ -604,7 +604,10 @@ function adicionarGrupoOpcao(dados = null) {
         nome: dados?.nome || '',
         alternativas: dados?.alternativas || [''],
         obrigatoria: dados?.obrigatoria ?? true,
-        multipla: true
+
+        // Grupos antigos sem configuração continuam múltiplos.
+        // Grupos novos começam como escolha única.
+        multipla: dados?.multipla ?? (dados ? true : false)
     }
 
     gruposOpcoes.push(grupo)
@@ -661,8 +664,19 @@ function desenharGruposOpcoes() {
                 + Adicionar alternativa
             </button>
 
-            <div class="opcao-configuracao">
+            <label>Tipo de seleção deste grupo</label>
 
+            <select class="grupo-tipo" data-grupo="${indice}">
+                <option value="unica" ${grupo.multipla ? '' : 'selected'}>
+                    Escolha única (apenas uma alternativa)
+                </option>
+
+                <option value="multipla" ${grupo.multipla ? 'selected' : ''}>
+                    Escolha múltipla (várias alternativas)
+                </option>
+            </select>
+
+            <div class="opcao-configuracao">
                 <label>
                     <input
                         type="checkbox"
@@ -671,7 +685,6 @@ function desenharGruposOpcoes() {
                         ${grupo.obrigatoria ? 'checked' : ''}>
                     Cliente precisa escolher pelo menos uma opção
                 </label>
-
             </div>
 
             <button
@@ -703,6 +716,15 @@ function desenharGruposOpcoes() {
         input.addEventListener('change', () => {
             gruposOpcoes[Number(input.dataset.grupo)].obrigatoria =
                 input.checked
+        })
+    })
+
+    container.querySelectorAll('.grupo-tipo').forEach(select => {
+        select.addEventListener('change', () => {
+            const indice = Number(select.dataset.grupo)
+
+            gruposOpcoes[indice].multipla =
+                select.value === 'multipla'
         })
     })
 
@@ -741,6 +763,9 @@ function desenharGruposOpcoes() {
         })
     })
 }
+// ==========================================
+// VALIDAR GRUPOS DE OPÇÕES
+// ==========================================
 
 function obterGruposValidados() {
     const resultado = []
@@ -766,7 +791,7 @@ function obterGruposValidados() {
             nome,
             alternativas,
             obrigatoria: grupo.obrigatoria,
-            multipla: true
+            multipla: grupo.multipla === true
         })
     }
 
@@ -934,9 +959,13 @@ async function carregarProdutosAdmin() {
             ? produto.opcoes_personalizadas
             : []
 
-        const resumoOpcoes = grupos.map(grupo =>
-            `${grupo.nome}: ${(grupo.alternativas || []).join(', ')}`
-        ).join(' | ')
+        const resumoOpcoes = grupos.map(grupo => {
+            const tipo = grupo.multipla
+                ? ' (múltipla escolha)'
+                : ' (escolha única)'
+
+            return `${grupo.nome}: ${(grupo.alternativas || []).join(', ')}${tipo}`
+        }).join(' | ')
 
         return `
             <article class="produto-admin">
