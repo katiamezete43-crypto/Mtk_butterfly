@@ -135,6 +135,39 @@ estilo.textContent = `
   margin-top: 4px;
 }
 
+.item-carrinho .personalizacao-carrinho {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  width: 100%;
+}
+.item-carrinho .personalizacao-carrinho .grupo-opcao {
+  margin: 0;
+}
+.item-carrinho .campo-carrinho label {
+  display: block;
+  font-size: 13px;
+  color: #781c42;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.item-carrinho .campo-carrinho input,
+.item-carrinho .campo-carrinho textarea {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #e7a5bf;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font: inherit;
+}
+.item-carrinho .campo-carrinho textarea {
+  min-height: 55px;
+}
+.item-carrinho .linha-item {
+  flex: 1;
+  min-width: 0;
+}
+
 .item-carrinho button {
   border: 0;
   background: #fff0f5;
@@ -358,35 +391,40 @@ async function carregarProdutos() {
   mostrarProdutos(produtos)
 }
 
-function montarCamposOpcoes(produto) {
-  const grupos = obterOpcoes(produto)
+function montarCamposOpcoesCarrinho(item, indiceItem) {
+  const grupos = item.grupos || []
 
-  return grupos.map((grupo, indice) => {
+  return grupos.map((grupo, indiceGrupo) => {
     const alternativas = Array.isArray(grupo.alternativas)
       ? grupo.alternativas
       : []
 
     if (!alternativas.length) return ''
 
-    return `
-      <div class="grupo-opcao"
-           data-grupo-opcao="${indice}">
+    const multipla = grupo.multipla === true
+    const tipoInput = multipla ? 'checkbox' : 'radio'
+    const nomeRadio = `grupo-${indiceItem}-${indiceGrupo}`
+    const selecionadas = item.opcoes.find(opcao => opcao.nome === grupo.nome)?.valores || []
 
+    return `
+      <div class="grupo-opcao">
         <span class="grupo-opcao-titulo">
           ${escaparHTML(grupo.nome)}
           ${grupo.obrigatoria ? '*' : '(opcional)'}
+          <small>(${multipla ? 'Pode escolher mais de uma' : 'Escolha apenas uma'})</small>
         </span>
-
-        ${alternativas.map(alternativa => `
+        ${alternativas.map((alternativa, posicao) => `
           <label class="opcao-alternativa">
             <input
-              type="checkbox"
-              data-indice-grupo="${indice}"
-              value="${escaparHTML(alternativa)}">
+              type="${tipoInput}"
+              name="${nomeRadio}"
+              data-item="${indiceItem}"
+              data-grupo="${indiceGrupo}"
+              value="${escaparHTML(alternativa)}"
+              ${selecionadas.includes(alternativa) ? 'checked' : ''}>
             ${escaparHTML(alternativa)}
           </label>
         `).join('')}
-
       </div>
     `
   }).join('')
@@ -402,7 +440,6 @@ function mostrarProdutos(lista) {
 
   container.innerHTML = lista.map(p => `
     <article class="produto-card" data-produto="${p.id}">
-
       <img
         src="${escaparHTML(p.imagem_url || 'https://placehold.co/500x600?text=MTK+Butterfly')}"
         alt="${escaparHTML(p.nome)}">
@@ -411,48 +448,15 @@ function mostrarProdutos(lista) {
         <span class="categoria-produto">
           ${escaparHTML(p.categoria || 'Outros')}
         </span>
-
         <h3>${escaparHTML(p.nome)}</h3>
-
         <p>${escaparHTML(p.descricao || '')}</p>
-
-        <p class="prazo">
-          ⏳ Prazo de produção:
-          ${Number(p.prazo_producao_dias || 0)} dia(s)
-        </p>
-
-        <p class="preco">
-          R$ ${formatarPreco(p.preco)}
-        </p>
-      </div>
-
-      <div class="campos-produto">
-
-        ${montarCamposOpcoes(p)}
-
-        <label>Quantidade</label>
-
-        <input
-          class="qtd-produto"
-          type="number"
-          min="1"
-          step="1"
-          value="1">
-
-        <label>Personalização / observações</label>
-
-        <textarea
-          class="obs-produto"
-          placeholder="Conte como deseja seu presente (opcional)">
-        </textarea>
-
+        <p class="preco">R$ ${formatarPreco(p.preco)}</p>
         <button
           type="button"
           class="botao-produto"
           data-adicionar="${p.id}">
           Adicionar ao carrinho
         </button>
-
       </div>
     </article>
   `).join('')
@@ -466,62 +470,27 @@ function mostrarProdutos(lista) {
 
 function adicionarAoCarrinho(id) {
   const produto = produtos.find(p => Number(p.id) === id)
-
   if (!produto) return
-
-  const card = document.querySelector(
-    `.produto-card[data-produto="${id}"]`
-  )
-
-  const quantidade = Number(
-    card.querySelector('.qtd-produto').value
-  )
-
-  const observacoes = card.querySelector('.obs-produto').value.trim()
-
-  if (!Number.isInteger(quantidade) || quantidade < 1) {
-    alert('Informe uma quantidade válida.')
-    return
-  }
-
-  const grupos = obterOpcoes(produto)
-  const opcoesSelecionadas = []
-
-  for (let indice = 0; indice < grupos.length; indice++) {
-    const grupo = grupos[indice]
-
-    const marcadas = [
-      ...card.querySelectorAll(
-        `input[data-indice-grupo="${indice}"]:checked`
-      )
-    ].map(input => input.value)
-
-    if (grupo.obrigatoria && marcadas.length === 0) {
-      alert(`Escolha pelo menos uma opção em: ${grupo.nome}.`)
-      return
-    }
-
-    if (marcadas.length) {
-      opcoesSelecionadas.push({
-        nome: grupo.nome,
-        valores: marcadas
-      })
-    }
-  }
 
   carrinho.push({
     id: produto.id,
     nome: produto.nome,
     preco: Number(produto.preco),
-    quantidade,
-    opcoes: opcoesSelecionadas,
-    observacoes,
+    quantidade: 1,
+    grupos: obterOpcoes(produto).map(grupo => ({
+      nome: grupo.nome,
+      alternativas: grupo.alternativas || [],
+      obrigatoria: grupo.obrigatoria ?? true,
+      multipla: grupo.multipla === true
+    })),
+    opcoes: [],
+    observacoes: '',
     prazo: Number(produto.prazo_producao_dias || 0)
   })
 
   atualizarCarrinho()
-
-  alert('Produto adicionado ao carrinho! 🦋')
+  document.querySelector('#carrinho').scrollIntoView({ behavior: 'smooth' })
+  alert('Produto adicionado! Agora escolha as personalizações no carrinho. 🦋')
 }
 
 function atualizarCarrinho() {
@@ -541,39 +510,41 @@ function atualizarCarrinho() {
 
   itens.className = ''
 
-  itens.innerHTML = carrinho.map((item, indice) => {
-    const textoOpcoes = item.opcoes.map(opcao =>
-      `${escaparHTML(opcao.nome)}: ${opcao.valores.map(escaparHTML).join(', ')}`
-    ).join('<br>')
+  itens.innerHTML = carrinho.map((item, indice) => `
+    <div class="item-carrinho">
+      <div class="linha-item">
+        <strong>${escaparHTML(item.nome)}</strong>
 
-    return `
-      <div class="item-carrinho">
+        <div class="personalizacao-carrinho">
+          ${montarCamposOpcoesCarrinho(item, indice)}
 
-        <div>
-          <strong>${escaparHTML(item.nome)}</strong>
+          <div class="campo-carrinho">
+            <label for="qtd-carrinho-${indice}">Quantidade</label>
+            <input
+              id="qtd-carrinho-${indice}"
+              type="number"
+              min="1"
+              step="1"
+              value="${item.quantidade}"
+              data-quantidade-item="${indice}">
+          </div>
 
-          <small>
-            Quantidade: ${item.quantidade}
-            ${textoOpcoes ? `<br>${textoOpcoes}` : ''}
-            <br>${item.prazo} dia(s) de produção
-
-            ${item.observacoes
-              ? `<br>Observações: ${escaparHTML(item.observacoes)}`
-              : ''}
-          </small>
-
-          <strong>
-            R$ ${formatarPreco(item.preco * item.quantidade)}
-          </strong>
+          <div class="campo-carrinho">
+            <label for="obs-carrinho-${indice}">Personalização / observações (opcional)</label>
+            <textarea
+              id="obs-carrinho-${indice}"
+              data-observacao-item="${indice}"
+              placeholder="Conte como deseja seu presente">${escaparHTML(item.observacoes)}</textarea>
+          </div>
         </div>
 
-        <button type="button" data-remover="${indice}">
-          Remover
-        </button>
-
+        <small>Prazo de produção: ${item.prazo} dia(s)</small>
+        <strong>R$ ${formatarPreco(item.preco * item.quantidade)}</strong>
       </div>
-    `
-  }).join('')
+
+      <button type="button" data-remover="${indice}">Remover</button>
+    </div>
+  `).join('')
 
   const total = carrinho.reduce(
     (soma, item) => soma + item.preco * item.quantidade,
@@ -581,12 +552,9 @@ function atualizarCarrinho() {
   )
 
   resumo.innerHTML = `
-    <p class="preco">
-      Total estimado: R$ ${formatarPreco(total)}
-    </p>
+    <p class="preco">Total estimado: R$ ${formatarPreco(total)}</p>
 
     <div class="finalizar-carrinho">
-
       <div class="campo">
         <label for="data-desejada">Para qual dia deseja?</label>
         <input
@@ -597,27 +565,17 @@ function atualizarCarrinho() {
 
       <div class="campo">
         <label for="nome-cliente">Seu nome (opcional)</label>
-        <input
-          id="nome-cliente"
-          type="text"
-          placeholder="Como podemos te chamar?">
+        <input id="nome-cliente" type="text" placeholder="Como podemos te chamar?">
       </div>
 
       <div class="campo largura-total">
         <label for="obs-geral">Observações do pedido (opcional)</label>
-        <input
-          id="obs-geral"
-          type="text"
-          placeholder="Mais algum detalhe?">
+        <input id="obs-geral" type="text" placeholder="Mais algum detalhe?">
       </div>
 
-      <button
-        type="button"
-        class="botao-principal largura-total"
-        id="finalizar-whatsapp">
+      <button type="button" class="botao-principal largura-total" id="finalizar-whatsapp">
         Enviar carrinho pelo WhatsApp
       </button>
-
     </div>
 
     <p class="prazo">
@@ -625,6 +583,45 @@ function atualizarCarrinho() {
       A data e a disponibilidade serão confirmadas diretamente pelo WhatsApp.
     </p>
   `
+
+  itens.querySelectorAll('[data-opcao-item], input[data-item]').forEach(input => {
+    input.addEventListener('change', () => {
+      const indiceItem = Number(input.dataset.item)
+      const indiceGrupo = Number(input.dataset.grupo)
+      const item = carrinho[indiceItem]
+      const grupo = item.grupos[indiceGrupo]
+      const marcadas = [
+        ...itens.querySelectorAll(
+          \`input[data-item="\${indiceItem}"][data-grupo="\${indiceGrupo}"]:checked\`
+        )
+      ].map(campo => campo.value)
+
+      const existente = item.opcoes.findIndex(opcao => opcao.nome === grupo.nome)
+      if (existente >= 0) item.opcoes.splice(existente, 1)
+      if (marcadas.length) {
+        item.opcoes.push({ nome: grupo.nome, valores: marcadas })
+      }
+    })
+  })
+
+  itens.querySelectorAll('[data-quantidade-item]').forEach(input => {
+    input.addEventListener('change', () => {
+      const quantidade = Number(input.value)
+      if (!Number.isInteger(quantidade) || quantidade < 1) {
+        alert('Informe uma quantidade válida.')
+        input.value = carrinho[Number(input.dataset.quantidadeItem)].quantidade
+        return
+      }
+      carrinho[Number(input.dataset.quantidadeItem)].quantidade = quantidade
+      atualizarCarrinho()
+    })
+  })
+
+  itens.querySelectorAll('[data-observacao-item]').forEach(input => {
+    input.addEventListener('input', () => {
+      carrinho[Number(input.dataset.observacaoItem)].observacoes = input.value
+    })
+  })
 
   itens.querySelectorAll('[data-remover]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -640,6 +637,20 @@ function atualizarCarrinho() {
 function finalizarWhatsApp() {
   if (!carrinho.length) return
 
+  for (const item of carrinho) {
+    for (const grupo of item.grupos || []) {
+      const escolha = item.opcoes.find(opcao => opcao.nome === grupo.nome)
+      if (grupo.obrigatoria && (!escolha || escolha.valores.length === 0)) {
+        alert(\`Escolha uma opção em "\${grupo.nome}" para o produto "\${item.nome}".\`)
+        return
+      }
+      if (grupo.multipla !== true && escolha && escolha.valores.length > 1) {
+        alert(\`Escolha somente uma alternativa em "\${grupo.nome}".\`)
+        return
+      }
+    }
+  }
+
   const data = document.querySelector('#data-desejada').value
   const nome = document.querySelector('#nome-cliente').value.trim()
   const observacoesGerais = document.querySelector('#obs-geral').value.trim()
@@ -649,46 +660,46 @@ function finalizarWhatsApp() {
     return
   }
 
-  const dataFormatada = new Date(`${data}T12:00:00`)
+  const dataFormatada = new Date(\`\${data}T12:00:00\`)
     .toLocaleDateString('pt-BR')
 
   const linhas = carrinho.map((item, indice) => {
     const opcoesTexto = item.opcoes.map(opcao =>
-      `   ${opcao.nome}: ${opcao.valores.join(', ')}`
-    ).join('\n')
+      \`   \${opcao.nome}: \${opcao.valores.join(', ')}\`
+    ).join('\\n')
 
-    return `
-${indice + 1}. ${item.nome}
-   Quantidade: ${item.quantidade}
-${opcoesTexto}
-   Valor: R$ ${formatarPreco(item.preco * item.quantidade)}
-   Prazo cadastrado: ${item.prazo} dia(s)
-   ${item.observacoes ? `Personalização: ${item.observacoes}` : ''}
-    `.trim()
-  }).join('\n\n')
+    return \`
+\${indice + 1}. \${item.nome}
+   Quantidade: \${item.quantidade}
+\${opcoesTexto}
+   Valor: R$ \${formatarPreco(item.preco * item.quantidade)}
+   Prazo cadastrado: \${item.prazo} dia(s)
+   \${item.observacoes ? \`Personalização: \${item.observacoes}\` : ''}
+    \`.trim()
+  }).join('\\n\\n')
 
   const total = carrinho.reduce(
     (soma, item) => soma + item.preco * item.quantidade,
     0
   )
 
-  const mensagem = `
+  const mensagem = \`
 == Olá! Vim pelo site da MTK Butterfly e gostaria de fazer uma encomenda. ===
 
-${nome ? `Nome: ${nome}\n` : ''}
+\${nome ? \`Nome: \${nome}\\n\` : ''}
 PRODUTOS:
 
-${linhas}
+\${linhas}
 
-Total estimado: R$ ${formatarPreco(total)}
-Data desejada: ${dataFormatada}
-${observacoesGerais ? `Observações gerais: ${observacoesGerais}` : ''}
+Total estimado: R$ \${formatarPreco(total)}
+Data desejada: \${dataFormatada}
+\${observacoesGerais ? \`Observações gerais: \${observacoesGerais}\` : ''}
 
 Podemos confirmar a disponibilidade e os detalhes?
-  `.trim()
+  \`.trim()
 
   window.open(
-    `https://wa.me/${whatsapp}?text=${encodeURIComponent(mensagem)}`,
+    \`https://wa.me/\${whatsapp}?text=\${encodeURIComponent(mensagem)}\`,
     '_blank',
     'noopener'
   )
