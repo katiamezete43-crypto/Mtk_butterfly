@@ -11,7 +11,7 @@ const categorias = [
   'Cestas de chocolate',
   'Aniversário',
   'Personalizados',
-  'De Natal',
+  'Natal',
   'Camisetas / Moletons',
   'Outros'
 ]
