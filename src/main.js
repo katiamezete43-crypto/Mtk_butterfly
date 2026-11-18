@@ -10,6 +10,9 @@ const categorias = [
   'Cestas',
   'Cestas de chocolate',
   'Aniversário',
+  'Personalizados',
+  'De Natal',
+  'Camisetas / Moletons',
   'Outros'
 ]
 
