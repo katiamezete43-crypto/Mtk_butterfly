@@ -1,4 +1,4 @@
-```javascript
+
 import './style.css'
 import { supabase } from './lib/supabase.js'
 
@@ -876,4 +876,4 @@ document.querySelector('#ir-carrinho').addEventListener('click', () => {
 // INICIAR SITE
 
 carregarProdutos()
-```
+
