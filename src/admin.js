@@ -3,7 +3,7 @@ import { supabase } from './lib/supabase.js'
 const app = document.querySelector('#admin-app')
 
 let produtoEditando = null
-let quantidadeOpcoes = 0
+let gruposOpcoes = []
 
 // ==========================================
 // ESTILIZAÇÃO
@@ -90,60 +90,29 @@ textarea {
     border-radius: 9px;
     cursor: pointer;
     font-size: 15px;
-    margin-top: 10px;
 }
 
 .botao:hover { background: #b8256c; }
 .botao:disabled { opacity: .6; cursor: wait; }
+
 .botao-secundario { background: #777; }
 .botao-excluir { background: #b52d55; }
 .botao-sair { background: #777; }
 
-.opcao-card {
-    background: #fff6fa;
-    border: 1px solid #efb4cf;
-    padding: 18px;
-    border-radius: 12px;
+#mensagem, #mensagem-produto {
     margin-top: 15px;
-}
-
-.opcao-card h3 {
     color: #d63384;
-    margin-top: 0;
+    font-weight: bold;
 }
 
-.alternativa-linha {
-    display: flex;
-    gap: 8px;
-    margin: 8px 0;
-}
-
-.alternativa-linha input {
-    flex: 1;
-}
-
-.alternativa-linha button {
+.link-recuperacao {
+    background: none;
     border: none;
-    background: #b52d55;
-    color: white;
-    border-radius: 8px;
-    padding: 8px 13px;
+    color: #d63384;
     cursor: pointer;
-}
-
-.checkbox-linha {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 12px 0;
-}
-
-.checkbox-linha input {
-    width: auto;
-}
-
-.checkbox-linha label {
-    margin: 0;
+    margin-top: 18px;
+    font-size: 14px;
+    text-decoration: underline;
 }
 
 .produto-admin {
@@ -172,20 +141,68 @@ textarea {
     flex-wrap: wrap;
 }
 
-.link-recuperacao {
-    background: none;
-    border: none;
-    color: #d63384;
-    cursor: pointer;
-    margin-top: 18px;
-    font-size: 14px;
-    text-decoration: underline;
+.grupo-opcao-admin {
+    border: 1px solid #efb4cf;
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 15px;
+    background: #fff9fc;
 }
 
-#mensagem, #mensagem-produto {
+.grupo-opcao-admin h3 {
+    color: #781c42;
+    margin-top: 0;
+}
+
+.linha-alternativa {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.linha-alternativa input {
+    flex: 1;
+}
+
+.linha-alternativa button,
+.botao-remover-grupo {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 13px;
+    background: #b52d55;
+    color: white;
+    cursor: pointer;
+}
+
+.opcao-configuracao {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.opcao-configuracao label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: normal;
+    margin: 5px 0;
+}
+
+.opcao-configuracao input {
+    width: auto;
+}
+
+.texto-ajuda {
+    color: #85536a;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.botao-adicionar {
     margin-top: 15px;
-    color: #d63384;
-    font-weight: bold;
+    background: #781c42;
 }
 
 @media (max-width: 600px) {
@@ -207,11 +224,25 @@ document.head.appendChild(estilo)
 
 
 // ==========================================
-// VERIFICA ADMINISTRADOR
+// FUNÇÕES AUXILIARES
+// ==========================================
+
+function escaparHTML(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, caractere => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[caractere])
+}
+
+
+// ==========================================
+// VERIFICAR ADMINISTRADOR
 // ==========================================
 
 async function verificarAdministrador(usuario) {
-
     const { data, error } = await supabase
         .from('administradores')
         .select('user_id')
@@ -237,7 +268,6 @@ async function verificarAdministrador(usuario) {
 // ==========================================
 
 function mostrarLogin(texto = '') {
-
     app.innerHTML = `
         <div class="painel">
             <div class="container">
@@ -248,7 +278,6 @@ function mostrarLogin(texto = '') {
                     <p>Área exclusiva do administrador</p>
 
                     <form id="form-login">
-
                         <label>E-mail</label>
                         <input type="email" id="email" required>
 
@@ -260,7 +289,6 @@ function mostrarLogin(texto = '') {
                         <button class="botao" type="submit">
                             Entrar no painel
                         </button>
-
                     </form>
 
                     <button
@@ -271,28 +299,24 @@ function mostrarLogin(texto = '') {
                     </button>
 
                     <div id="mensagem">${escaparHTML(texto)}</div>
-
                 </div>
             </div>
         </div>
     `
 
-    document
-        .querySelector('#form-login')
+    document.querySelector('#form-login')
         .addEventListener('submit', entrar)
 
-    document
-        .querySelector('#esqueci-senha')
+    document.querySelector('#esqueci-senha')
         .addEventListener('click', solicitarRecuperacao)
 }
 
 
 // ==========================================
-// RECUPERAR SENHA
+// RECUPERAÇÃO DE SENHA
 // ==========================================
 
 async function solicitarRecuperacao() {
-
     const email = document.querySelector('#email').value.trim()
     const mensagem = document.querySelector('#mensagem')
     const botao = document.querySelector('#esqueci-senha')
@@ -306,7 +330,6 @@ async function solicitarRecuperacao() {
     mensagem.textContent = 'Enviando e-mail de recuperação...'
 
     try {
-
         const { error } = await supabase.auth.resetPasswordForEmail(
             email,
             {
@@ -320,9 +343,8 @@ async function solicitarRecuperacao() {
             'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha. Verifique sua caixa de entrada.'
 
     } catch (erro) {
-
-        mensagem.textContent =
-            'Não foi possível enviar o e-mail: ' + erro.message
+        console.error(erro)
+        mensagem.textContent = 'Não foi possível enviar: ' + erro.message
 
     } finally {
         botao.disabled = false
@@ -335,11 +357,9 @@ async function solicitarRecuperacao() {
 // ==========================================
 
 function mostrarRedefinirSenha(texto = '') {
-
     app.innerHTML = `
         <div class="painel">
             <div class="container">
-
                 <div class="cartao"
                     style="max-width:420px;margin:100px auto;text-align:center">
 
@@ -362,29 +382,23 @@ function mostrarRedefinirSenha(texto = '') {
                             id="botao-nova-senha">
                             Salvar nova senha
                         </button>
-
                     </form>
 
                     <div id="mensagem">${escaparHTML(texto)}</div>
-
                 </div>
             </div>
         </div>
     `
 
-    document
-        .querySelector('#form-nova-senha')
+    document.querySelector('#form-nova-senha')
         .addEventListener('submit', salvarNovaSenha)
 }
 
-
 async function salvarNovaSenha(evento) {
-
     evento.preventDefault()
 
     const senha = document.querySelector('#nova-senha').value
     const confirmacao = document.querySelector('#confirmar-senha').value
-
     const mensagem = document.querySelector('#mensagem')
     const botao = document.querySelector('#botao-nova-senha')
 
@@ -402,7 +416,6 @@ async function salvarNovaSenha(evento) {
     mensagem.textContent = 'Atualizando sua senha...'
 
     try {
-
         const { error } = await supabase.auth.updateUser({
             password: senha
         })
@@ -417,15 +430,11 @@ async function salvarNovaSenha(evento) {
             window.location.pathname
         )
 
-        mostrarLogin(
-            'Senha alterada com sucesso! Agora entre com sua nova senha. ❤️'
-        )
+        mostrarLogin('Senha alterada com sucesso! ❤️')
 
     } catch (erro) {
-
-        mensagem.textContent =
-            'Não foi possível alterar a senha: ' + erro.message
-
+        console.error(erro)
+        mensagem.textContent = 'Erro: ' + erro.message
         botao.disabled = false
     }
 }
@@ -436,12 +445,10 @@ async function salvarNovaSenha(evento) {
 // ==========================================
 
 async function entrar(evento) {
-
     evento.preventDefault()
 
     const email = document.querySelector('#email').value.trim()
     const senha = document.querySelector('#senha').value
-
     const mensagem = document.querySelector('#mensagem')
 
     mensagem.textContent = 'Verificando acesso...'
@@ -461,20 +468,18 @@ async function entrar(evento) {
 
 
 // ==========================================
-// PAINEL ADMINISTRATIVO
+// PAINEL
 // ==========================================
 
 function mostrarPainel() {
-
     produtoEditando = null
-    quantidadeOpcoes = 0
+    gruposOpcoes = []
 
     app.innerHTML = `
         <div class="painel">
             <div class="container">
 
                 <header class="cabecalho">
-
                     <div>
                         <h1>MTK BUTTERFLY</h1>
                         <p>Gerencie os produtos da sua vitrine virtual</p>
@@ -483,7 +488,6 @@ function mostrarPainel() {
                     <button class="botao botao-sair" id="sair">
                         Sair
                     </button>
-
                 </header>
 
                 <section class="cartao">
@@ -517,31 +521,33 @@ function mostrarPainel() {
                         <label>Foto do produto</label>
                         <input type="file" id="imagem" accept="image/*">
 
-                        <p id="aviso-imagem">
+                        <p id="aviso-imagem" class="texto-ajuda">
                             Selecione uma foto para o produto.
                         </p>
-
-                        <hr>
-
-                        <h2>Personalização do produto</h2>
-
-                        <p>
-                            Adicione opções para o cliente escolher,
-                            como cor, tamanho, chocolate ou material.
-                        </p>
-
-                        <div id="lista-opcoes"></div>
-
-                        <button type="button" class="botao"
-                            id="adicionar-opcao">
-                            + Adicionar grupo de opções
-                        </button>
-
-                        <br>
 
                         <label>Prazo de produção (dias)</label>
                         <input type="number" id="prazo-producao"
                             min="0" step="1" value="3" required>
+
+                        <hr style="margin:25px 0;border:0;border-top:1px solid #f1c5d9">
+
+                        <h2>Opções personalizadas</h2>
+
+                        <p class="texto-ajuda">
+                            Cadastre as opções que a cliente poderá escolher
+                            para este produto. Exemplo: Cor, tamanho, chocolate
+                            ou peso. A cliente poderá marcar mais de uma
+                            alternativa dentro de cada grupo.
+                        </p>
+
+                        <div id="grupos-opcoes"></div>
+
+                        <button
+                            type="button"
+                            class="botao botao-adicionar"
+                            id="adicionar-grupo">
+                            + Adicionar grupo de opções
+                        </button>
 
                         <br><br>
 
@@ -552,32 +558,29 @@ function mostrarPainel() {
 
                         <button type="button"
                             class="botao botao-secundario"
-                            id="cancelar-edicao" hidden>
+                            id="cancelar-edicao"
+                            hidden>
                             Cancelar edição
                         </button>
 
                         <div id="mensagem-produto"></div>
 
                     </form>
-
                 </section>
 
                 <section class="cartao">
-
                     <h2>Produtos cadastrados</h2>
 
                     <div id="produtos-cadastrados">
                         Carregando produtos...
                     </div>
-
                 </section>
 
             </div>
         </div>
     `
 
-    document.querySelector('#sair')
-        .addEventListener('click', sair)
+    document.querySelector('#sair').addEventListener('click', sair)
 
     document.querySelector('#form-produto')
         .addEventListener('submit', salvarProduto)
@@ -585,7 +588,7 @@ function mostrarPainel() {
     document.querySelector('#cancelar-edicao')
         .addEventListener('click', cancelarEdicao)
 
-    document.querySelector('#adicionar-opcao')
+    document.querySelector('#adicionar-grupo')
         .addEventListener('click', () => adicionarGrupoOpcao())
 
     carregarProdutosAdmin()
@@ -593,152 +596,181 @@ function mostrarPainel() {
 
 
 // ==========================================
-// CRIAR GRUPO DE OPÇÕES
+// GRUPOS DE OPÇÕES
 // ==========================================
 
 function adicionarGrupoOpcao(dados = null) {
-
-    quantidadeOpcoes++
-
-    const id = quantidadeOpcoes
-
-    const container = document.querySelector('#lista-opcoes')
-
-    const card = document.createElement('div')
-
-    card.className = 'opcao-card'
-    card.dataset.grupo = id
-
-    card.innerHTML = `
-
-        <h3>Grupo de opções</h3>
-
-        <label>Nome da opção</label>
-
-        <input
-            type="text"
-            class="nome-opcao"
-            placeholder="Ex.: Cor, Tamanho, Tipo de chocolate"
-            value="${escaparHTML(dados?.nome || '')}"
-            required
-        >
-
-        <label>Alternativas disponíveis</label>
-
-        <div class="alternativas"></div>
-
-        <button type="button" class="botao adicionar-alternativa">
-            + Adicionar alternativa
-        </button>
-
-        <div class="checkbox-linha">
-            <input type="checkbox" class="opcao-obrigatoria"
-                ${dados?.obrigatoria ? 'checked' : ''}>
-            <label>Cliente precisa escolher esta opção</label>
-        </div>
-
-        <button type="button" class="botao botao-excluir remover-grupo">
-            Remover grupo
-        </button>
-    `
-
-    container.appendChild(card)
-
-    const alternativas = card.querySelector('.alternativas')
-
-    if (dados?.alternativas?.length) {
-
-        dados.alternativas.forEach(alternativa => {
-            adicionarAlternativa(alternativas, alternativa)
-        })
-
-    } else {
-
-        adicionarAlternativa(alternativas)
+    const grupo = {
+        nome: dados?.nome || '',
+        alternativas: dados?.alternativas || [''],
+        obrigatoria: dados?.obrigatoria ?? true,
+        multipla: true
     }
 
-    card.querySelector('.adicionar-alternativa')
-        .addEventListener('click', () => {
-            adicionarAlternativa(alternativas)
-        })
+    gruposOpcoes.push(grupo)
 
-    card.querySelector('.remover-grupo')
-        .addEventListener('click', () => {
-            card.remove()
-        })
+    desenharGruposOpcoes()
 }
 
+function desenharGruposOpcoes() {
+    const container = document.querySelector('#grupos-opcoes')
 
-// ==========================================
-// ADICIONAR ALTERNATIVA
-// ==========================================
+    container.innerHTML = gruposOpcoes.map((grupo, indice) => `
+        <div class="grupo-opcao-admin" data-grupo="${indice}">
 
-function adicionarAlternativa(container, valor = '') {
+            <h3>Grupo ${indice + 1}</h3>
 
-    const linha = document.createElement('div')
+            <label>Nome do grupo</label>
 
-    linha.className = 'alternativa-linha'
+            <input
+                type="text"
+                class="nome-grupo"
+                data-indice="${indice}"
+                value="${escaparHTML(grupo.nome)}"
+                placeholder="Ex.: Cor, Tamanho, Chocolate">
 
-    linha.innerHTML = `
-        <input
-            type="text"
-            class="valor-alternativa"
-            placeholder="Ex.: Rosa"
-            value="${escaparHTML(valor)}"
-            required
-        >
+            <label>Alternativas disponíveis</label>
 
-        <button type="button">X</button>
-    `
+            <div class="alternativas">
+                ${grupo.alternativas.map((alternativa, posicao) => `
+                    <div class="linha-alternativa">
 
-    container.appendChild(linha)
+                        <input
+                            type="text"
+                            class="alternativa"
+                            data-grupo="${indice}"
+                            data-posicao="${posicao}"
+                            value="${escaparHTML(alternativa)}"
+                            placeholder="Digite uma alternativa">
 
-    linha.querySelector('button').addEventListener('click', () => {
-        linha.remove()
+                        <button
+                            type="button"
+                            data-remover-alternativa="${indice}"
+                            data-posicao="${posicao}">
+                            Remover
+                        </button>
+
+                    </div>
+                `).join('')}
+            </div>
+
+            <button
+                type="button"
+                class="botao botao-secundario"
+                data-adicionar-alternativa="${indice}">
+                + Adicionar alternativa
+            </button>
+
+            <div class="opcao-configuracao">
+
+                <label>
+                    <input
+                        type="checkbox"
+                        class="grupo-obrigatorio"
+                        data-grupo="${indice}"
+                        ${grupo.obrigatoria ? 'checked' : ''}>
+                    Cliente precisa escolher pelo menos uma opção
+                </label>
+
+            </div>
+
+            <button
+                type="button"
+                class="botao-remover-grupo"
+                data-remover-grupo="${indice}">
+                Excluir grupo
+            </button>
+
+        </div>
+    `).join('')
+
+    container.querySelectorAll('.nome-grupo').forEach(input => {
+        input.addEventListener('input', () => {
+            gruposOpcoes[Number(input.dataset.indice)].nome = input.value
+        })
+    })
+
+    container.querySelectorAll('.alternativa').forEach(input => {
+        input.addEventListener('input', () => {
+            const grupo = Number(input.dataset.grupo)
+            const posicao = Number(input.dataset.posicao)
+
+            gruposOpcoes[grupo].alternativas[posicao] = input.value
+        })
+    })
+
+    container.querySelectorAll('.grupo-obrigatorio').forEach(input => {
+        input.addEventListener('change', () => {
+            gruposOpcoes[Number(input.dataset.grupo)].obrigatoria =
+                input.checked
+        })
+    })
+
+    container.querySelectorAll('[data-adicionar-alternativa]').forEach(botao => {
+        botao.addEventListener('click', () => {
+            const indice = Number(botao.dataset.adicionarAlternativa)
+
+            gruposOpcoes[indice].alternativas.push('')
+
+            desenharGruposOpcoes()
+        })
+    })
+
+    container.querySelectorAll('[data-remover-alternativa]').forEach(botao => {
+        botao.addEventListener('click', () => {
+            const grupo = Number(botao.dataset.removerAlternativa)
+            const posicao = Number(botao.dataset.posicao)
+
+            gruposOpcoes[grupo].alternativas.splice(posicao, 1)
+
+            if (!gruposOpcoes[grupo].alternativas.length) {
+                gruposOpcoes[grupo].alternativas.push('')
+            }
+
+            desenharGruposOpcoes()
+        })
+    })
+
+    container.querySelectorAll('[data-remover-grupo]').forEach(botao => {
+        botao.addEventListener('click', () => {
+            const indice = Number(botao.dataset.removerGrupo)
+
+            gruposOpcoes.splice(indice, 1)
+
+            desenharGruposOpcoes()
+        })
     })
 }
 
+function obterGruposValidados() {
+    const resultado = []
 
-// ==========================================
-// LER OPÇÕES DO FORMULÁRIO
-// ==========================================
+    for (const grupo of gruposOpcoes) {
+        const nome = grupo.nome.trim()
 
-function obterOpcoesFormulario() {
-
-    const grupos = document.querySelectorAll('.opcao-card')
-
-    const opcoes = []
-
-    grupos.forEach(grupo => {
-
-        const nome = grupo.querySelector('.nome-opcao').value.trim()
-
-        const alternativas = [
-            ...grupo.querySelectorAll('.valor-alternativa')
-        ]
-            .map(input => input.value.trim())
+        const alternativas = grupo.alternativas
+            .map(item => item.trim())
             .filter(Boolean)
 
-        const obrigatoria =
-            grupo.querySelector('.opcao-obrigatoria').checked
+        if (!nome && !alternativas.length) continue
 
         if (!nome) {
-            throw new Error('Informe o nome de todos os grupos de opções.')
+            throw new Error('Dê um nome para cada grupo de opções.')
         }
 
-        if (!alternativas.length) {
-            throw new Error(`Adicione alternativas para "${nome}".`)
+        if (alternativas.length === 0) {
+            throw new Error(`Adicione alternativas ao grupo "${nome}".`)
         }
 
-        opcoes.push({
+        resultado.push({
             nome,
             alternativas,
-            obrigatoria,
+            obrigatoria: grupo.obrigatoria,
             multipla: true
         })
-    })
+    }
 
-    return opcoes
+    return resultado
 }
 
 
@@ -747,7 +779,6 @@ function obterOpcoesFormulario() {
 // ==========================================
 
 async function enviarImagem(arquivo) {
-
     const extensao = arquivo.name.split('.').pop()
 
     const nomeArquivo = `${crypto.randomUUID()}.${extensao}`
@@ -769,38 +800,41 @@ async function enviarImagem(arquivo) {
 
 
 // ==========================================
-// SALVAR OU EDITAR PRODUTO
+// SALVAR PRODUTO
 // ==========================================
 
 async function salvarProduto(evento) {
-
     evento.preventDefault()
 
     const mensagem = document.querySelector('#mensagem-produto')
     const botao = document.querySelector('#salvar-produto')
 
     botao.disabled = true
-    mensagem.textContent = 'Salvando...'
+    mensagem.textContent = 'Salvando produto...'
 
     try {
-
         const nome = document.querySelector('#nome').value.trim()
 
-        const descricao = document.querySelector('#descricao').value.trim()
+        const descricao = document.querySelector('#descricao')
+            .value.trim()
 
         const preco = Number(document.querySelector('#preco').value)
 
         const categoria = document.querySelector('#categoria').value
 
-        const opcoesPersonalizadas = obterOpcoesFormulario()
-
         const prazoProducao = Number(
             document.querySelector('#prazo-producao').value
         )
 
+        if (!Number.isFinite(preco) || preco <= 0) {
+            throw new Error('Informe um preço válido.')
+        }
+
         if (!Number.isInteger(prazoProducao) || prazoProducao < 0) {
             throw new Error('Informe um prazo de produção válido.')
         }
+
+        const opcoesPersonalizadas = obterGruposValidados()
 
         const arquivo = document.querySelector('#imagem').files[0]
 
@@ -816,13 +850,15 @@ async function salvarProduto(evento) {
             preco,
             categoria,
             imagem_url: imagemUrl,
-            cores: [],
-            opcoes_personalizadas: opcoesPersonalizadas,
-            prazo_producao_dias: prazoProducao
+
+            // Preserva as cores antigas dos produtos.
+            cores: produtoEditando?.cores || [],
+
+            prazo_producao_dias: prazoProducao,
+            opcoes_personalizadas: opcoesPersonalizadas
         }
 
         if (produtoEditando) {
-
             const { error } = await supabase
                 .from('produto')
                 .update(dadosProduto)
@@ -830,17 +866,18 @@ async function salvarProduto(evento) {
 
             if (error) throw error
 
-            mensagem.textContent = 'Produto atualizado com sucesso! ❤️'
+            mensagem.textContent =
+                'Produto atualizado com sucesso! ❤️'
 
         } else {
-
             const { error } = await supabase
                 .from('produto')
                 .insert([dadosProduto])
 
             if (error) throw error
 
-            mensagem.textContent = 'Produto cadastrado com sucesso! ❤️'
+            mensagem.textContent =
+                'Produto cadastrado com sucesso! ❤️'
         }
 
         limparFormulario()
@@ -848,15 +885,12 @@ async function salvarProduto(evento) {
         await carregarProdutosAdmin()
 
     } catch (erro) {
-
         console.error(erro)
 
         mensagem.textContent = 'Erro: ' + erro.message
-
-    } finally {
-
-        botao.disabled = false
     }
+
+    botao.disabled = false
 }
 
 
@@ -865,7 +899,6 @@ async function salvarProduto(evento) {
 // ==========================================
 
 async function carregarProdutosAdmin() {
-
     const container = document.querySelector('#produtos-cadastrados')
 
     const { data, error } = await supabase
@@ -878,43 +911,39 @@ async function carregarProdutosAdmin() {
             categoria,
             imagem_url,
             cores,
-            opcoes_personalizadas,
-            prazo_producao_dias
+            prazo_producao_dias,
+            opcoes_personalizadas
         `)
         .order('created_at', { ascending: false })
 
     if (error) {
-
-        container.textContent = 'Não foi possível carregar os produtos.'
+        container.textContent =
+            'Não foi possível carregar os produtos.'
 
         console.error(error)
-
         return
     }
 
     if (!data || data.length === 0) {
-
         container.textContent = 'Nenhum produto cadastrado.'
-
         return
     }
 
     container.innerHTML = data.map(produto => {
+        const grupos = Array.isArray(produto.opcoes_personalizadas)
+            ? produto.opcoes_personalizadas
+            : []
 
-        const opcoes = produto.opcoes_personalizadas || []
-
-        const textoOpcoes = opcoes.length
-            ? opcoes.map(o => `${o.nome}: ${o.alternativas.join(', ')}`).join(' | ')
-            : 'Sem opções personalizadas'
+        const resumoOpcoes = grupos.map(grupo =>
+            `${grupo.nome}: ${(grupo.alternativas || []).join(', ')}`
+        ).join(' | ')
 
         return `
-
             <article class="produto-admin">
 
                 <img
-                    src="${produto.imagem_url || 'https://placehold.co/100x120?text=Sem+foto'}"
-                    alt="Foto do produto"
-                >
+                    src="${escaparHTML(produto.imagem_url || 'https://placehold.co/100x120?text=Sem+foto')}"
+                    alt="Foto do produto">
 
                 <div class="produto-admin-info">
 
@@ -926,7 +955,10 @@ async function carregarProdutosAdmin() {
                         R$ ${Number(produto.preco).toFixed(2).replace('.', ',')}
                     </strong>
 
-                    <p>Opções: ${escaparHTML(textoOpcoes)}</p>
+                    <p>
+                        Opções:
+                        ${escaparHTML(resumoOpcoes || 'Sem opções personalizadas')}
+                    </p>
 
                     <p>
                         Prazo de produção:
@@ -935,12 +967,14 @@ async function carregarProdutosAdmin() {
 
                     <div class="acoes">
 
-                        <button class="botao"
+                        <button
+                            class="botao"
                             data-editar="${produto.id}">
                             Editar
                         </button>
 
-                        <button class="botao botao-excluir"
+                        <button
+                            class="botao botao-excluir"
                             data-excluir="${produto.id}">
                             Excluir
                         </button>
@@ -948,19 +982,14 @@ async function carregarProdutosAdmin() {
                     </div>
 
                 </div>
-
             </article>
-
         `
-
     }).join('')
 
     container.querySelectorAll('[data-editar]').forEach(botao => {
-
         botao.addEventListener('click', () => {
-
             const produto = data.find(item =>
-                item.id === Number(botao.dataset.editar)
+                String(item.id) === botao.dataset.editar
             )
 
             editarProduto(produto)
@@ -968,9 +997,8 @@ async function carregarProdutosAdmin() {
     })
 
     container.querySelectorAll('[data-excluir]').forEach(botao => {
-
         botao.addEventListener('click', () => {
-            excluirProduto(Number(botao.dataset.excluir))
+            excluirProduto(botao.dataset.excluir)
         })
     })
 }
@@ -981,18 +1009,20 @@ async function carregarProdutosAdmin() {
 // ==========================================
 
 function editarProduto(produto) {
-
     produtoEditando = produto
 
-    document.querySelector('#titulo-formulario').textContent = 'Editar produto'
+    document.querySelector('#titulo-formulario').textContent =
+        'Editar produto'
 
     document.querySelector('#nome').value = produto.nome || ''
 
-    document.querySelector('#descricao').value = produto.descricao || ''
+    document.querySelector('#descricao').value =
+        produto.descricao || ''
 
     document.querySelector('#preco').value = produto.preco ?? ''
 
-    document.querySelector('#categoria').value = produto.categoria || ''
+    document.querySelector('#categoria').value =
+        produto.categoria || ''
 
     document.querySelector('#imagem').value = ''
 
@@ -1002,15 +1032,11 @@ function editarProduto(produto) {
     document.querySelector('#prazo-producao').value =
         produto.prazo_producao_dias ?? 3
 
-    document.querySelector('#lista-opcoes').innerHTML = ''
+    gruposOpcoes = Array.isArray(produto.opcoes_personalizadas)
+        ? JSON.parse(JSON.stringify(produto.opcoes_personalizadas))
+        : []
 
-    quantidadeOpcoes = 0
-
-    const opcoes = produto.opcoes_personalizadas || []
-
-    opcoes.forEach(opcao => {
-        adicionarGrupoOpcao(opcao)
-    })
+    desenharGruposOpcoes()
 
     document.querySelector('#salvar-produto').textContent =
         'Salvar alterações'
@@ -1023,22 +1049,16 @@ function editarProduto(produto) {
 
 
 // ==========================================
-// CANCELAR EDIÇÃO
+// CANCELAR E LIMPAR FORMULÁRIO
 // ==========================================
 
 function cancelarEdicao() {
     limparFormulario()
 }
 
-
-// ==========================================
-// LIMPAR FORMULÁRIO
-// ==========================================
-
 function limparFormulario() {
-
     produtoEditando = null
-    quantidadeOpcoes = 0
+    gruposOpcoes = []
 
     document.querySelector('#form-produto').reset()
 
@@ -1053,9 +1073,9 @@ function limparFormulario() {
     document.querySelector('#aviso-imagem').textContent =
         'Selecione uma foto para o produto.'
 
-    document.querySelector('#lista-opcoes').innerHTML = ''
-
     document.querySelector('#prazo-producao').value = 3
+
+    desenharGruposOpcoes()
 }
 
 
@@ -1064,7 +1084,6 @@ function limparFormulario() {
 // ==========================================
 
 async function excluirProduto(id) {
-
     const confirmar = confirm(
         'Tem certeza de que deseja excluir este produto? Essa ação não poderá ser desfeita.'
     )
@@ -1077,15 +1096,12 @@ async function excluirProduto(id) {
         .eq('id', id)
 
     if (error) {
-
-        alert('Não foi possível excluir o produto: ' + error.message)
-
+        alert('Não foi possível excluir: ' + error.message)
         console.error(error)
-
         return
     }
 
-    if (produtoEditando && produtoEditando.id === id) {
+    if (produtoEditando && String(produtoEditando.id) === String(id)) {
         limparFormulario()
     }
 
@@ -1096,41 +1112,20 @@ async function excluirProduto(id) {
 
 
 // ==========================================
-// PROTEGER TEXTOS
-// ==========================================
-
-function escaparHTML(texto) {
-
-    return String(texto ?? '').replace(/[&<>"']/g, caractere => ({
-
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-
-    })[caractere])
-}
-
-
-// ==========================================
 // SAIR
 // ==========================================
 
 async function sair() {
-
     await supabase.auth.signOut()
-
     mostrarLogin()
 }
 
 
 // ==========================================
-// INICIAR PÁGINA
+// INICIAR
 // ==========================================
 
 async function iniciar() {
-
     const { data, error } = await supabase.auth.getSession()
 
     if (error) {
@@ -1143,12 +1138,11 @@ async function iniciar() {
             .get('recuperar') === '1'
 
     if (estaRecuperando) {
-
         if (data.session) {
             mostrarRedefinirSenha()
         } else {
             mostrarLogin(
-                'O link de recuperação expirou ou é inválido. Solicite um novo link.'
+                'O link expirou ou é inválido. Solicite um novo link.'
             )
         }
 
@@ -1167,14 +1161,10 @@ async function iniciar() {
 // DETECTAR RECUPERAÇÃO DE SENHA
 // ==========================================
 
-supabase.auth.onAuthStateChange((evento) => {
-
+supabase.auth.onAuthStateChange(evento => {
     if (evento === 'PASSWORD_RECOVERY') {
         mostrarRedefinirSenha()
     }
 })
-
-
-// INICIAR SISTEMA
 
 iniciar()
