@@ -409,35 +409,44 @@ function mostrarProdutos(lista) {
     return
   }
 
-  container.innerHTML = lista.map(p => `
-    <article class="produto-card" data-produto="${p.id}">
+  container.innerHTML = lista.map(p => {
+    const prazo = Number(p.prazo_producao_dias || 0)
 
-      <img
-        src="${escaparHTML(p.imagem_url || 'https://placehold.co/500x600?text=MTK+Butterfly')}"
-        alt="${escaparHTML(p.nome)}">
+    return `
+      <article class="produto-card" data-produto="${p.id}">
 
-      <div class="produto-info">
+        <img
+          src="${escaparHTML(p.imagem_url || 'https://placehold.co/500x600?text=MTK+Butterfly')}"
+          alt="${escaparHTML(p.nome)}">
 
-        <h3>${escaparHTML(p.nome)}</h3>
+        <div class="produto-info">
 
-        <p>${escaparHTML(p.descricao || '')}</p>
+          <h3>${escaparHTML(p.nome)}</h3>
 
-        <p class="preco">
-          R$ ${formatarPreco(p.preco)}
-        </p>
+          <p>${escaparHTML(p.descricao || '')}</p>
 
-        <button
-          type="button"
-          class="botao-produto"
-          data-adicionar="${p.id}">
+          <p class="preco">
+            R$ ${formatarPreco(p.preco)}
+          </p>
 
-          Adicionar ao carrinho
+          <p class="prazo">
+            ⏳ Prazo de produção:
+            ${prazo} ${prazo === 1 ? 'dia' : 'dias'}
+          </p>
 
-        </button>
+          <button
+            type="button"
+            class="botao-produto"
+            data-adicionar="${p.id}">
 
-      </div>
-    </article>
-  `).join('')
+            Adicionar ao carrinho
+
+          </button>
+
+        </div>
+      </article>
+    `
+  }).join('')
 
   container.querySelectorAll('[data-adicionar]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -603,7 +612,8 @@ function atualizarCarrinho() {
         </div>
 
         <small>
-          Prazo de produção: ${item.prazo} dia(s)
+          Prazo de produção:
+          ${item.prazo} ${item.prazo === 1 ? 'dia' : 'dias'}
         </small>
 
         <strong>
@@ -853,7 +863,7 @@ ${indice + 1}. ${item.nome}
    Quantidade: ${item.quantidade}
 ${opcoesTexto}
    Valor: R$ ${formatarPreco(item.preco * item.quantidade)}
-   Prazo cadastrado: ${item.prazo} dia(s)
+   Prazo cadastrado: ${item.prazo} ${item.prazo === 1 ? 'dia' : 'dias'}
    ${item.observacoes ? `Personalização: ${item.observacoes}` : ''}
     `.trim()
   }).join('\n\n')
