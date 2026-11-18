@@ -17,6 +17,12 @@ let produtos = []
 let carrinho = []
 let categoriaAtual = 'Todas'
 
+let dadosPedido = {
+  data: '',
+  nome: '',
+  observacoes: ''
+}
+
 const estilo = document.createElement('style')
 
 estilo.textContent = `
@@ -412,10 +418,6 @@ function mostrarProdutos(lista) {
 
       <div class="produto-info">
 
-        <span class="categoria-produto">
-          ${escaparHTML(p.categoria || 'Outros')}
-        </span>
-
         <h3>${escaparHTML(p.nome)}</h3>
 
         <p>${escaparHTML(p.descricao || '')}</p>
@@ -638,7 +640,8 @@ function atualizarCarrinho() {
         <input
           id="data-desejada"
           type="date"
-          min="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)}">
+          min="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)}"
+          value="${escaparHTML(dadosPedido.data)}">
 
       </div>
 
@@ -651,7 +654,8 @@ function atualizarCarrinho() {
         <input
           id="nome-cliente"
           type="text"
-          placeholder="Como podemos te chamar?">
+          placeholder="Como podemos te chamar?"
+          value="${escaparHTML(dadosPedido.nome)}">
 
       </div>
 
@@ -664,7 +668,8 @@ function atualizarCarrinho() {
         <input
           id="obs-geral"
           type="text"
-          placeholder="Mais algum detalhe?">
+          placeholder="Mais algum detalhe?"
+          value="${escaparHTML(dadosPedido.observacoes)}">
 
       </div>
 
@@ -758,6 +763,23 @@ function atualizarCarrinho() {
       atualizarCarrinho()
     })
   })
+
+  // SALVAR DADOS GERAIS DO PEDIDO
+
+  document.querySelector('#data-desejada')
+    .addEventListener('change', event => {
+      dadosPedido.data = event.target.value
+    })
+
+  document.querySelector('#nome-cliente')
+    .addEventListener('input', event => {
+      dadosPedido.nome = event.target.value
+    })
+
+  document.querySelector('#obs-geral')
+    .addEventListener('input', event => {
+      dadosPedido.observacoes = event.target.value
+    })
 
   // FINALIZAR PEDIDO
 
@@ -876,4 +898,3 @@ document.querySelector('#ir-carrinho').addEventListener('click', () => {
 // INICIAR SITE
 
 carregarProdutos()
-
